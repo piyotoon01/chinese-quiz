@@ -1,0 +1,1304 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>중국어 복습 퀴즈</title>
+<link rel="icon" href="icon-32.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="중국어 퀴즈">
+<meta name="theme-color" content="#b8432f">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f6f2ea;
+  --card: #fffdf8;
+  --ink: #23201b;
+  --muted: #6f685d;
+  --line: #e4ddd0;
+  --accent: #b8432f;
+  --accent-ink: #ffffff;
+  --accent-soft: #f6e3dd;
+  --ok: #2c7a4b;
+  --ok-soft: #e1f1e6;
+  --warn: #9a6a12;
+  --warn-soft: #f8edd5;
+  --bad: #b03a2e;
+  --bad-soft: #f8e0dc;
+  --chip: #efe8db;
+  --shadow: 0 1px 2px rgba(40, 30, 10, .06), 0 4px 16px rgba(40, 30, 10, .05);
+  --fs: 17px;
+  --zh: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b1916; --card: #252220; --ink: #f1ece3; --muted: #aaa194; --line: #3a3530;
+    --accent: #e0705b; --accent-ink: #1b1916; --accent-soft: #3d2721;
+    --ok: #6cc28c; --ok-soft: #1f3327; --warn: #e2b155; --warn-soft: #3a2f1a;
+    --bad: #ec8073; --bad-soft: #3c2320; --chip: #33302b; --shadow: none;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1b1916; --card: #252220; --ink: #f1ece3; --muted: #aaa194; --line: #3a3530;
+  --accent: #e0705b; --accent-ink: #1b1916; --accent-soft: #3d2721;
+  --ok: #6cc28c; --ok-soft: #1f3327; --warn: #e2b155; --warn-soft: #3a2f1a;
+  --bad: #ec8073; --bad-soft: #3c2320; --chip: #33302b; --shadow: none;
+}
+:root.big { --fs: 20px; }
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  font-size: var(--fs); line-height: 1.6;
+}
+.wrap { max-width: 560px; margin: 0 auto; padding: 20px 16px 48px; }
+.zh { font-family: var(--zh); }
+h1 { font-size: 1.5em; margin: 8px 0 4px; letter-spacing: -.01em; }
+.sub { color: var(--muted); margin: 0 0 20px; }
+.card {
+  background: var(--card); border: 1px solid var(--line); border-radius: 18px;
+  padding: 20px; margin-bottom: 14px; box-shadow: var(--shadow);
+}
+.stat { display: flex; gap: 12px; }
+.stat div { flex: 1; background: var(--chip); border-radius: 12px; padding: 12px; text-align: center; }
+.stat b { display: block; font-size: 1.6em; line-height: 1.2; }
+.stat span { color: var(--muted); font-size: .85em; }
+button {
+  font: inherit; color: inherit; cursor: pointer; border: 0; background: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
+  min-height: 58px; padding: 12px 18px; border-radius: 14px; font-weight: 700; font-size: 1.05em;
+  background: var(--accent); color: var(--accent-ink);
+}
+.btn:disabled { opacity: .45; cursor: default; }
+.btn.ghost { background: transparent; color: var(--ink); border: 1.5px solid var(--line); font-weight: 500; }
+.btn + .btn { margin-top: 10px; }
+.row { display: flex; gap: 10px; }
+.row .btn { margin-top: 0; }
+.link { color: var(--muted); text-decoration: underline; font-size: .9em; padding: 8px 0; }
+.toggle {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px 0; border-top: 1px solid var(--line);
+}
+.toggle:first-of-type { border-top: 0; }
+.toggle small { display: block; color: var(--muted); font-size: .82em; }
+.switch { position: relative; width: 52px; height: 30px; flex: none; border-radius: 99px; background: var(--line); transition: background .15s; }
+.switch::after {
+  content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px;
+  border-radius: 50%; background: #fff; transition: transform .15s; box-shadow: 0 1px 2px rgba(0,0,0,.2);
+}
+.switch[aria-checked="true"] { background: var(--accent); }
+.switch[aria-checked="true"]::after { transform: translateX(22px); }
+.switch:disabled { opacity: .4; cursor: default; }
+
+/* 문제 화면 */
+.top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.top .back { font-size: 1.4em; width: 40px; height: 40px; border-radius: 50%; }
+.bar { flex: 1; height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--accent); border-radius: 99px; transition: width .25s; }
+.count { color: var(--muted); font-size: .85em; white-space: nowrap; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.chip { background: var(--chip); border-radius: 99px; padding: 2px 10px; font-size: .8em; color: var(--muted); }
+.chip.sec { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+.prompt { font-size: 1.08em; font-weight: 500; margin: 0 0 14px; }
+.big-zh { font-family: var(--zh); font-size: 2.4em; font-weight: 500; text-align: center; margin: 6px 0 2px; line-height: 1.3; }
+.big-py { text-align: center; color: var(--muted); margin-bottom: 8px; }
+.sentence { font-family: var(--zh); font-size: 1.7em; text-align: center; margin: 4px 0 16px; letter-spacing: .02em; }
+.choices { display: grid; gap: 10px; }
+.choice {
+  text-align: left; width: 100%; min-height: 56px; padding: 12px 16px; border-radius: 14px;
+  border: 1.5px solid var(--line); background: var(--card); display: flex; gap: 12px; align-items: center;
+}
+.choice .n { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--chip); display: grid; place-items: center; font-size: .8em; color: var(--muted); }
+.choice.zhc { font-family: var(--zh); font-size: 1.35em; }
+.choice.picked { border-color: var(--bad); background: var(--bad-soft); }
+.choice.right { border-color: var(--ok); background: var(--ok-soft); }
+.choice.gone { opacity: .3; text-decoration: line-through; pointer-events: none; }
+.choice:disabled { cursor: default; }
+input.answer {
+  width: 100%; font-family: var(--zh); font-size: 1.6em; padding: 12px 14px; border-radius: 14px;
+  border: 1.5px solid var(--line); background: var(--card); color: var(--ink); text-align: center;
+}
+input.answer:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.slots {
+  min-height: 64px; border: 1.5px dashed var(--line); border-radius: 14px; padding: 8px;
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px;
+}
+.slots:empty::before { content: "아래 카드를 순서대로 눌러 주세요"; color: var(--muted); font-size: .85em; padding: 0 6px; }
+.pool { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.tile {
+  font-family: var(--zh); font-size: 1.3em; min-height: 48px; padding: 6px 14px; border-radius: 12px;
+  background: var(--card); border: 1.5px solid var(--line); box-shadow: var(--shadow);
+}
+.slots .tile { background: var(--accent-soft); border-color: transparent; }
+.tile.used { background: var(--chip); border-color: transparent; color: transparent; box-shadow: none; pointer-events: none; }
+.btn:focus-visible, .choice:focus-visible, .tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.feedback { border-radius: 16px; padding: 16px; margin-top: 14px; }
+.feedback.ok { background: var(--ok-soft); }
+.feedback.hint { background: var(--warn-soft); }
+.feedback.bad { background: var(--bad-soft); }
+.feedback h3 { margin: 0 0 6px; font-size: 1.05em; }
+.feedback.ok h3 { color: var(--ok); }
+.feedback.hint h3 { color: var(--warn); }
+.feedback.bad h3 { color: var(--bad); }
+.full { background: var(--card); border-radius: 12px; padding: 12px 14px; margin: 10px 0; }
+.full .zh { font-size: 1.45em; line-height: 1.4; }
+.full .py { color: var(--muted); }
+.speak { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 99px; background: var(--chip); font-size: .85em; margin-top: 6px; }
+.note { font-size: .92em; margin: 6px 0 0; }
+.note b { font-weight: 700; }
+.mt { margin-top: 14px; }
+.list { list-style: none; padding: 0; margin: 0; }
+.list li { padding: 12px 0; border-top: 1px solid var(--line); }
+.list li:first-child { border-top: 0; }
+.list .zh { font-size: 1.25em; }
+.tag { font-size: .78em; padding: 1px 8px; border-radius: 99px; margin-left: 6px; vertical-align: 2px; }
+.tag.hint { background: var(--warn-soft); color: var(--warn); }
+.tag.bad { background: var(--bad-soft); color: var(--bad); }
+.foot { color: var(--muted); font-size: .8em; text-align: center; margin-top: 24px; }
+
+/* 듣기 문제 */
+.listen { display: flex; align-items: center; gap: 16px; margin: 4px 0 18px; }
+.play { width: 72px; height: 72px; flex: none; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-size: 1.9em; box-shadow: var(--shadow); }
+.play:active { transform: scale(.96); }
+.listen .note { margin: 0 0 4px; color: var(--muted); }
+
+/* 반응 효과 */
+@keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(1.025); } 100% { transform: scale(1); } }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-7px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+.pop { animation: pop .35s ease-out; }
+.shake { animation: shake .4s ease-in-out; }
+.feedback { animation: rise .25s ease-out; }
+.feedback h3 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tick { width: 26px; height: 26px; flex: none; }
+.tick circle { fill: var(--ok); }
+.tick path { fill: none; stroke: #fff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 16; stroke-dashoffset: 16; animation: draw .3s .1s ease-out forwards; }
+.combo { margin-left: auto; background: var(--accent-soft); color: var(--accent); border-radius: 99px; padding: 1px 10px; font-size: .8em; animation: rise .3s ease-out; }
+
+/* 연속 학습일 */
+.streak { margin-bottom: 16px; }
+.streak .line { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.streak b { font-size: 1.15em; }
+.streak small { color: var(--muted); font-size: .82em; }
+.week { display: flex; justify-content: space-between; gap: 4px; }
+.week span { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--chip); color: var(--muted); font-size: .78em; }
+.week span.on { background: var(--accent); color: var(--accent-ink); font-weight: 700; }
+.week span.today { box-shadow: 0 0 0 2px var(--card), 0 0 0 4px var(--accent); }
+.confetti { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
+@media (max-width: 360px) { .week span { width: 32px; height: 32px; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .tick path { stroke-dashoffset: 0; }
+}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script src="data/items.js?v=202610081256"></script>
+<script src="data/questions.js?v=202610081256"></script>
+<script>
+"use strict";
+(() => {
+const ITEMS = window.ITEMS || [];
+const AUTHORED = window.AUTHORED || [];
+const byId = new Map(ITEMS.map(it => [it.id, it]));
+const byH = new Map(ITEMS.map(it => [it.h, it]));
+const INTERVAL = [1, 3, 7, 14, 30]; // 복습 횟수 0회→1일, 1회→3일, 2회→7일, 3회→14일, 4회 이상→30일
+const LEVELS = ["새로 배움", "애매함", "익숙함"];
+
+// ---------- 저장 ----------
+const KEY = "cnquiz.v1";
+const SESSION_V = 2; // 세션에 저장되는 문제 형식이 바뀌면 올린다 — 예전 세션은 푼 것만 기록하고 버린다
+let STORAGE_OK = true; // 사생활 보호 모드·일부 앱 안 브라우저는 저장이 막혀 있다
+function load() {
+  try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { STORAGE_OK = false; return {}; }
+}
+try { localStorage.setItem(KEY + ".test", "1"); localStorage.removeItem(KEY + ".test"); } catch (e) { STORAGE_OK = false; }
+const db = Object.assign({ prog: {}, settings: {}, session: null, days: [] }, load());
+function save() { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) { STORAGE_OK = false; } }
+const S = db.settings;
+
+// ---------- 날짜 ----------
+const pad = n => String(n).padStart(2, "0");
+const fmt = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const today = () => fmt(new Date());
+function addDays(str, n) { const d = new Date(str + "T00:00:00"); d.setDate(d.getDate() + n); return fmt(d); }
+function daysBetween(a, b) { return Math.round((new Date(b + "T00:00:00") - new Date(a + "T00:00:00")) / 864e5); }
+function koDate(str) {
+  const d = new Date(str + "T00:00:00");
+  return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${"일월화수목금토"[d.getDay()]})`;
+}
+// rc 복습 횟수 / wc 틀린 횟수 / lv 숙련도 0~2 / due 다음 복습일 / last 마지막 결과("ok"·"bad")
+function prog(id) { return db.prog[id] || { rc: 0, wc: 0, lv: 0, due: null }; }
+function isSeen(id) { return !!db.prog[id]; }                         // 이 퀴즈에서 한 번이라도 푼 항목
+function isDue(id) { const p = prog(id); return !p.due || p.due <= today(); }
+function isReviewDue(id) { return isSeen(id) && isDue(id); }          // 이미 푼 항목 중 복습할 때가 된 것
+
+// ---------- 도우미 ----------
+const rnd = n => Math.floor(Math.random() * n);
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rnd(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function el(tag, attrs, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k === "class") e.className = v;
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v === true ? "" : v);
+  }
+  for (const k of flat(kids)) if (k != null && k !== false) e.append(k.nodeType ? k : String(k));
+  return e;
+}
+// 오래된 아이폰(iOS 12~13)에도 있는 기능만 쓴다 — Array.flat / replaceChildren 대신
+function flat(a) { return a.reduce((o, k) => o.concat(Array.isArray(k) ? flat(k) : [k]), []); }
+function fill(node, ...kids) {
+  node.textContent = "";
+  for (const k of flat(kids)) if (k != null && k !== false) node.append(k.nodeType ? k : String(k));
+}
+const norm = s => String(s || "").replace(/[\s，。？！、,.?!；;：:“”"'（）()…]/g, "");
+const PURE_ZH = /^[一-鿿]+[？！]?$/;
+const ZH_ONLY = s => s.replace(/[？！]/g, "");
+
+// 출처 → 주제 (같은 주제 4문제 제한·범위 분산용)
+function topic(src) {
+  const rules = [
+    [/Lesson 4/, "가격·쇼핑"], [/Lesson 3/, "양사·허락"], [/Lesson 2/, "길 묻기"], [/교통/, "교통"],
+    [/양사/, "양사"], [/연결표현/, "연결 표현"], [/정도부사/, "정도부사"], [/청유형/, "제안"],
+    [/문장순서/, "어순"], [/빨간책/, "기초 단어"], [/1음절/, "1음절 단어"], [/드라마/, "드라마 표현"],
+    [/작문/, "작문 표현"], [/Claude/, "회화 표현"], [/새 표현/, "새 표현"], [/수업/, "수업 표현"],
+    [/새 교재/, "새 교재"], [/기초편/, "기초편"]
+  ];
+  for (const [re, name] of rules) if (re.test(src)) return name;
+  return src || "기타";
+}
+
+// ---------- 병음 ----------
+const TONED = { a: "āáǎà", e: "ēéěè", i: "īíǐì", o: "ōóǒò", u: "ūúǔù", "ü": "ǖǘǚǜ" };
+const VOWEL = {};
+for (const [b, s] of Object.entries(TONED)) { VOWEL[b] = [b, 0]; [...s].forEach((c, i) => (VOWEL[c] = [b, i + 1])); }
+function segments(py) {
+  const out = []; let cur = null;
+  for (const ch of py.toLowerCase()) {
+    const isV = ch in VOWEL;
+    if (!cur || cur.v !== isV) { cur = { v: isV, s: "" }; out.push(cur); }
+    cur.s += ch;
+  }
+  return out;
+}
+function runTone(run) { for (const c of run) if (VOWEL[c][1]) return VOWEL[c][1]; return 0; }
+function setTone(run, t) {
+  const base = [...run].map(c => VOWEL[c][0]).join("");
+  if (!t) return base;
+  let i = base.indexOf("a");
+  if (i < 0) i = base.indexOf("e");
+  if (i < 0 && base.includes("ou")) i = base.indexOf("o");
+  if (i < 0) i = base.length - 1;
+  return base.slice(0, i) + TONED[base[i]][t - 1] + base.slice(i + 1);
+}
+function tones(py) { return segments(py).filter(s => s.v).map(s => runTone(s.s)); }
+function tonePattern(py) {
+  const t = tones(py);
+  if (!t.length) return "";
+  let s = t.map(n => (n ? n + "성" : "경성")).join("-");
+  for (let i = 0; i + 1 < t.length; i++) if (t[i] === 3 && t[i + 1] === 3) { s += " (3성이 이어지면 앞의 3성은 2성처럼 읽어요)"; break; }
+  return s;
+}
+// keep: 바꾸지 않을 음절 순번(0부터) — 不·一 처럼 뒤 글자에 따라 성조가 바뀌는 글자는 사전 표기(bù, yī)가
+// 오답 보기로 나오면 헷갈리므로 건드리지 않는다
+// 실제로 나는 소리의 성조: 3성이 이어지면 앞의 3성은 2성으로 읽는다
+// 3성이 셋 이어지면 끊어 읽는 방식에 따라 결과가 달라서 앞에서부터·뒤에서부터 두 가지를 모두 본다
+function surfaces(ts) {
+  const f = ts.slice(), b = ts.slice();
+  for (let i = 0; i + 1 < f.length; i++) if (f[i] === 3 && f[i + 1] === 3) f[i] = 2;
+  for (let i = b.length - 2; i >= 0; i--) if (b[i] === 3 && b[i + 1] === 3) b[i] = 2;
+  return [f.join(""), b.join("")];
+}
+function toneVariants(py, keep) {
+  const seg = segments(py);
+  // 바꾸지 않는 음절: keep(不·一) 과 경성 — 경성을 본래 성조로 바꾼 보기(péngyǒu)는 사전식으로는 맞아서 정답이 둘이 된다
+  const idx = seg.map((s, i) => (s.v ? i : -1)).filter(i => i >= 0)
+    .filter((i, n) => !(keep && keep.has(n)) && runTone(seg[i].s) !== 0);
+  const orig = seg.map(s => s.s).join(""), out = new Set();
+  const build = (changes) => seg.map((s, i) => (i in changes ? setTone(s.s, changes[i]) : s.s)).join("");
+  // 2·3성 맞바꾸기를 먼저 (가장 헷갈리는 조합)
+  idx.forEach(i => { const t = runTone(seg[i].s); if (t === 2 || t === 3) out.add(build({ [i]: 5 - t })); });
+  idx.forEach(i => { for (let t = 1; t <= 4; t++) if (t !== runTone(seg[i].s)) out.add(build({ [i]: t })); });
+  if (idx.length > 1) for (let k = 0; k < 6; k++) { const ch = {}; idx.forEach(i => (ch[i] = 1 + rnd(4))); out.add(build(ch)); }
+  out.delete(orig);
+  // 3성 변조 때문에 정답과 같은 소리가 나는 보기는 뺀다 (nǐ hǎo 와 ní hǎo, píngguǒ 와 pǐngguǒ)
+  const same = surfaces(tones(orig));
+  const arr = [...out].filter(v => !surfaces(tones(v)).some(s => same.includes(s)));
+  return shuffle(arr.slice(0, 2).concat(shuffle(arr.slice(2))).slice(0, 3));
+}
+
+// ---------- 문제 만들기 ----------
+const KIND_LABEL = {
+  meaning_mc: "뜻 맞히기", hanzi_mc: "간체자 고르기", hanzi_input: "간체자 쓰기", tone_mc: "성조 고르기",
+  fill_mc: "빈칸 채우기", fill_input: "빈칸 채우기", order: "어순 배열", translate: "중국어로 옮기기",
+  situation: "상황 표현", speak: "말하기 연습", sentence_mc: "예문 뜻 고르기",
+  listen_word: "듣고 고르기", listen_sent: "듣고 뜻 고르기"
+};
+// 같은 유형 몇 문제까지 제한할 때 묶어서 세는 이름
+const TYPE_OF = k => (k === "fill_mc" || k === "fill_input" ? "fill" : k.startsWith("listen") ? "listen" : k);
+const IS_MC = k => ["meaning_mc", "hanzi_mc", "tone_mc", "fill_mc", "situation", "sentence_mc", "listen_word", "listen_sent"].includes(k);
+const IS_TILE = k => k === "order" || k === "translate" || k === "speak"; // 카드를 눌러 문장을 만드는 문제
+
+function simpleWord(it) {
+  return PURE_ZH.test(it.h) && it.p && !/[+/…()（]/.test(it.p);
+}
+function isNewExpr(it) { return /새 표현/.test(it.src) && prog(it.id).rc <= 2; }
+
+// 자동 문제에서 뺄 항목
+const AUTO_SKIP = new Set(["连动文", "麻"]);                       // 문법 용어, 성조 연습용 글자
+const WORD_SKIP = new Set(["的", "吧", "呢", "吗", "和"]);         // 뜻·간체자 맞히기에 맞지 않는 조사 — 예문 문제로만 낸다
+const LISTEN_SKIP = new Set(["只", "支"]);                         // 음성이 只를 zhī 로 읽기도 해서 소리로 못 가른다
+// 过 는 경성 조사(guo, 경험)만 빼고 '지나다'(guò)는 낸다
+const isParticle = it => WORD_SKIP.has(ZH_ONLY(it.h)) || (ZH_ONLY(it.h) === "过" && !tones(it.p).some(t => t));
+const autoOk = it => simpleWord(it) && !AUTO_SKIP.has(ZH_ONLY(it.h)) && !isParticle(it);
+
+// 문제에 보여 줄 뜻: 한자·병음이 든 괄호 메모, ' — ' 뒤 설명, 발음 메모를 뺀다 (정답이 보이거나 지시문이 길어지지 않게)
+function dm(it) {
+  const m = String(it.m || "").split(/\s+—\s+/)[0]
+    .replace(/\s*\([^()]*[A-Za-z一-鿿][^()]*\)/g, "")
+    .replace(/\s*\((얼화음|경성|[1-4]성)\)/g, "").trim();
+  return m || it.m;
+}
+// 받침에 맞는 조사: josa('여기', '이에요', '예요') → 예요
+function hasBatchim(w) {
+  // 끝의 괄호 설명은 소리 내 읽지 않으니 그 앞 글자로 본다: '개 (동물)' → 개
+  let s = String(w);
+  while (/\s*\([^()]*\)\s*$/.test(s)) s = s.replace(/\s*\([^()]*\)\s*$/, "");
+  s = s.replace(/[\s'"’)\]）.!?~…]+$/, "");
+  const c = s.charAt(s.length - 1), code = c.charCodeAt(0);
+  if (code >= 0xac00 && code <= 0xd7a3) return (code - 0xac00) % 28 !== 0;
+  if (/\d/.test(c)) return "013678".includes(c); // 영·일·삼·육·칠·팔
+  return false;
+}
+const josa = (w, a, b) => (hasBatchim(w) ? a : b);
+
+// 뜻이 겹치는 항목끼리는 서로의 오답 보기로 쓰지 않는다 (정답이 둘이 되지 않게)
+const SYN = [["二", "两"], ["很", "非常", "特别", "真", "真的"], ["这儿", "这里"], ["那儿", "那里"], ["周", "星期"], ["日", "号"],
+  ["但是", "可是"], ["看看", "看一下"], ["等等", "等一下", "等我一下"], ["妈", "妈妈"], ["好看", "好漂亮"], ["一刻", "十五分"], ["半", "三十分"],
+  ["狗", "个"], ["他", "那"], ["它", "那", "那个"], ["唱", "唱歌"], ["做饭", "做菜"], ["家", "家里"], ["里", "里边儿"], ["旁边", "旁边儿"], ["分", "分钟"],
+  ["就", "一直"], ["几", "多少", "多"], ["要", "需要", "想"], ["没关系", "不客气", "可以", "不错", "还可以", "还不错", "没问题"], ["你好", "您好", "再见", "慢走"],
+  ["而且", "还有"], ["真的", "真的吗"], ["虽然", "但是", "可是"], ["走", "走路"], ["白", "白色"], ["学", "学习"], ["说", "告诉"], ["高兴", "快乐"],
+  ["条", "件"], ["姓", "贵姓"], ["坏", "破"], ["菜", "饭"], ["早上", "上午"], ["多少", "钱"]];
+// 한 글자가 여러 무리에 들어 있을 수 있으니 무리들을 합쳐서 본다 (那, 真的, 但是, 要, 多少 …)
+const synOf = new Map();
+SYN.forEach(g => g.forEach(h => { if (!synOf.has(h)) synOf.set(h, new Set()); g.forEach(x => synOf.get(h).add(x)); }));
+const inSyn = (a, b) => synOf.has(a) && synOf.get(a).has(b);
+// 뜻 낱말: 어미를 떼서 '괜찮다·괜찮아·괜찮네', '안녕·안녕히' 를 같은 말로 본다
+// 한 글자 낱말은 풀이 하나가 통째로 한 글자일 때만 비교한다 ('개', '그, 저'의 그) — '걸터타는 것'의 것, '~에 다니다'의 에 는 버린다
+const stem = t => t.replace(/(습니다|세요|어요|아요|해요|하다|이다|네|다|아|어|요|히)$/, "") || t;
+function mTokens(m) {
+  const out = [];
+  String(m || "").split(/[,，/·]/).forEach(g => {
+    const words = g.split(/[\s()（）~.?!？…]+/).filter(Boolean).map(stem).filter(Boolean);
+    words.forEach(w => { if (w.length >= 2 || /\d/.test(w)) out.push(w); });
+    if (words.length === 1 && words[0].length === 1) out.push(words[0]);
+  });
+  return out;
+}
+const TOK = new Map(ITEMS.map(it => [it.id, new Set(mTokens(dm(it)))])); // 항목이 많아 미리 계산해 둔다
+function clash(a, b) {
+  const ha = ZH_ONLY(a.h), hb = ZH_ONLY(b.h);
+  if (ha === hb || a.m === b.m || inSyn(ha, hb) || inSyn(hb, ha)) return true;
+  const ta = TOK.get(a.id);
+  for (const t of TOK.get(b.id)) if (ta.has(t)) return true;
+  return false;
+}
+// 뜻만 보고 쓰는 문제에서 함께 정답으로 받아 줄 간체자 — 뜻이 글자까지 같거나 정말 같은 말(SAME)일 때만
+// SYN 은 '오답 보기에서 빼기'용이라 넓다(很·非常·特别). '뜻 낱말을 모두 포함'까지 받으면 '주말'에 上周末가 정답이 된다
+const SAME = [["这儿", "这里"], ["那儿", "那里"], ["妈", "妈妈"], ["周", "星期"], ["但是", "可是"], ["看看", "看一下"], ["等等", "等一下"],
+  ["旁边", "旁边儿"], ["里", "里边儿", "里边", "里面"], ["一刻", "十五分"], ["半", "三十分"], ["三刻", "四十五分"], ["点儿", "一点儿"], ["汉语", "中文"],
+  ["唱", "唱歌"]];
+function sameMeaning(it) {
+  const h = ZH_ONLY(it.h);
+  const group = SAME.filter(g => g.includes(h)).reduce((a, g) => a.concat(g), []); // 항목에 없는 말(十五分)도 받는다
+  const items = ITEMS.filter(o => o.id !== it.id && simpleWord(o) && o.m === it.m).map(o => ZH_ONLY(o.h));
+  return [...new Set(items.concat(group))].filter(x => x !== h);
+}
+// 오답 보기 n개: val(항목) 값이 겹치지 않게, 뜻이 겹치는 항목은 빼고, prefer 에 맞는 것부터
+function pickOthers(it, n, val, prefer) {
+  const mine = val(it);
+  const pool = ITEMS.filter(o => o.id !== it.id && autoOk(o) && !clash(it, o) && val(o) && val(o) !== mine);
+  const good = shuffle(pool.filter(prefer)), rest = shuffle(pool.filter(o => !prefer(o)));
+  const out = [];
+  for (const o of good.concat(rest)) { if (out.length >= n) break; if (!out.includes(val(o))) out.push(val(o)); }
+  return out;
+}
+function mcOf(correct, others) {
+  const choices = shuffle([correct, ...others]);
+  return { choices, answer: choices.indexOf(correct) };
+}
+function fullOf(it) { return { h: it.h, p: it.p, m: it.m }; }
+
+// 예문 "중국어 / 병음 / 뜻" 을 나눈다. 이 형식이 아닌 예문(메모, 패턴 설명)은 null
+const ZH_SENT = /^[一-鿿，。？！、：；“”（）()\sAB:]+$/;
+function parseEx(it) {
+  // "我很忙。/ Wǒ…" 처럼 슬래시 앞에 띄어쓰기가 없는 예문도 있다 (병음 속 zhè/nà 는 뒤에 띄어쓰기가 없어 안 잘린다)
+  const parts = String(it.ex || "").split(/\s*\/\s+/);
+  if (parts.length < 3) return null;
+  const h = parts[0].trim(), p = parts[1].trim();
+  let m = parts.slice(2).join(" / ")
+    .replace(/\s*\([^()]*[A-Za-z一-鿿][^()]*\)/g, ""); // 한자·병음이 든 괄호 메모 먼저 (안에 — 가 있어도 안전하게)
+  m = m.split(/\s+—\s+/)[0].trim();
+  while (/\s*\([^()]*\)$/.test(m)) m = m.replace(/\s*\([^()]*\)$/, "").trim(); // 끝의 괄호 메모
+  // "한 명. 발음은 경성" 처럼 뒤에 붙은 설명 문장은 뺀다
+  const ms = m.split(". "), cut = ms.findIndex(s => /발음|성조|경성|주의|직접|필기|메모|구분/.test(s));
+  if (cut > 0) m = ms.slice(0, cut).join(". ").replace(/\.?$/, ".");
+  if (!ZH_SENT.test(h) || !/[一-鿿]/.test(h)) return null;
+  if (/[A-Za-z]/.test(h.replace(/(^|\s)[AB]:\s*/g, " "))) return null; // "A是B", "因为A，所以B。" 같은 패턴은 예문이 아니다
+  if (!/[a-zA-Zāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]/.test(p) || /[一-鿿가-힣]/.test(p)) return null;
+  if (!/[가-힣]/.test(m) || /[一-鿿]/.test(m)) return null;
+  return { h, p, m };
+}
+const EXP = new Map(ITEMS.map(it => [it.id, AUTO_SKIP.has(ZH_ONLY(it.h)) ? null : parseEx(it)]));
+const EXS = ITEMS.filter(it => EXP.get(it.id)).map(it => Object.assign({ id: it.id }, EXP.get(it.id)));
+// 사실상 같은 문장을 같게 보기 위한 정리 (这里=这儿, 不远≈很近)
+const canon = s => String(s).replace(/这里/g, "这儿").replace(/那里/g, "那儿").replace(/不远/g, "很近").replace(/大家/g, "你们").replace(/[，。？！、\s]/g, "");
+const kcore = s => String(s).replace(/[\s.,!?~]/g, "");
+// 같은 글자가 들어간 다른 예문의 뜻을 오답으로 — 문장을 읽어야 고를 수 있게
+// 정답 문장·뜻을 포함하거나 거기 포함되는 예문(입어 봐도 돼요? / 이 옷 입어 봐도 돼요?)은 오답으로 쓰지 않는다
+function exDistractors(it, ex) {
+  const chars = new Set(ZH_ONLY(ex.h).replace(/[^一-鿿]/g, ""));
+  const ch = canon(ex.h), km = kcore(ex.m);
+  const pool = EXS.filter(o => {
+    if (o.id === it.id) return false;
+    const c = canon(o.h), k = kcore(o.m);
+    return c !== ch && !c.includes(ch) && !ch.includes(c) && k !== km && !k.includes(km) && !km.includes(k);
+  });
+  const ranked = shuffle(pool).map(o => ({ o, s: [...o.h].filter(c => chars.has(c)).length + Math.random() })).sort((a, b) => b.s - a.s);
+  const out = [], usedH = [];
+  for (const { o } of ranked) {
+    if (out.length >= 3) break;
+    // 같은 예문이 뜻 표기만 달리 두 번 나오거나, 고른 오답끼리 서로 포함 관계면(A: 여기서… / 여기서…) 보기 하나가 낭비된다
+    const c = canon(o.h), k = kcore(o.m);
+    if (usedH.some(u => u.includes(c) || c.includes(u)) || out.some(x => kcore(x).includes(k) || k.includes(kcore(x)))) continue;
+    usedH.push(c); out.push(o.m);
+  }
+  return out;
+}
+function exQuestions(it, newExpr) {
+  const ex = EXP.get(it.id);
+  if (!ex) return [];
+  const others = exDistractors(it, ex);
+  if (others.length < 3) return [];
+  const base = { itemId: it.id, tag: topic(it.src), full: ex, explain: `핵심 표현: ${it.h} (${it.p}) — ${it.m}` };
+  const qs = [Object.assign({}, base, {
+    kind: "sentence_mc", prompt: "이 문장의 뜻은 무엇일까요?", sentence: ex.h, showP: newExpr ? ex.p : null,
+    hint: `보기 두 개를 지웠어요. ${autoOk(it) ? `${it.h}는 '${dm(it)}'${josa(dm(it), "이라는", "라는")} 뜻이에요.` : "다시 천천히 읽어 보세요."}`
+  }, mcOf(ex.m, others))];
+  if (!newExpr && listenOn()) qs.push(Object.assign({}, base, {
+    kind: "listen_sent", prompt: "잘 듣고, 들은 문장의 뜻을 고르세요.", listen: ex.h,
+    hint: "천천히 다시 들려 드릴게요. 보기 두 개를 지웠어요."
+  }, mcOf(ex.m, exDistractors(it, ex))));
+  return qs;
+}
+// 성조를 뗀 병음 (소리가 비슷한 단어를 고를 때 쓴다)
+const plain = p => [...String(p || "").toLowerCase()].map(c => (VOWEL[c] ? VOWEL[c][0] : c)).join("").replace(/[^a-zü ]/g, " ").trim();
+// 음절 핵심(첫 자음 + 모음)만 뽑는다. 예: zhōngguó → zho, guo
+function sylls(p) {
+  const out = [];
+  let pre = "";
+  for (const s of segments(plain(p))) {
+    if (!s.v) { const m = s.s.replace(/[^a-z]/g, "").match(/(zh|ch|sh|[bcdfghjklmnpqrstwxyz])$/); pre = m ? m[1] : ""; }
+    else { out.push(pre + s.s); pre = ""; }
+  }
+  return out;
+}
+// 들리는 소리 그대로 비교하기 위한 병음: 띄어쓰기·문장부호를 빼고, 끝의 얼화 r 도 뺀다 (旁边/旁边儿, 那/那儿)
+// 단 '二 èr' 처럼 r 이 음절 자체인 경우는 그대로 둔다
+const sound = p => String(p).toLowerCase()
+  .replace(/([a-zāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜü][aeiouüāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜn])r(?=\s|'|$)/g, "$1") // diǎnr → diǎn (성조 붙은 모음 뒤도)
+  .replace(/[^a-zāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜü]/g, "");
+// 듣기 문제에 쓸 수 있는 단어: 경성뿐인 조사(吗 ma, 吧 ba)는 음성이 따로 읽으면 성조가 붙어 구분이 안 된다
+const listenable = o => autoOk(o) && !LISTEN_SKIP.has(ZH_ONLY(o.h)) && tones(o.p).some(t => t);
+function listenWord(it) {
+  if (!listenable(it)) return [];
+  const me = sound(it.p);
+  const myPlain = plain(it.p).replace(/\s/g, ""), mySy = new Set(sylls(it.p)), len = ZH_ONLY(it.h).length;
+  const ranked = shuffle(ITEMS.filter(o => o.id !== it.id && listenable(o) && !clash(it, o)
+      // 발음이 같은 단어(他/她/它, 旁边/旁边儿)는 들어서 구분할 수 없으니 뺀다
+      && sound(o.p) !== me))
+    .map(o => {
+      let s = Math.random();
+      if (plain(o.p).replace(/\s/g, "") === myPlain) s += 4;      // 성조만 다른 단어 (妈/麻/马)
+      if (sylls(o.p).some(x => mySy.has(x))) s += 2;              // 같은 음절이 들어간 단어
+      if (ZH_ONLY(o.h).length === len) s += 1;
+      return { o, s };
+    }).sort((a, b) => b.s - a.s);
+  const out = [];
+  for (const { o } of ranked) { if (out.length >= 3) break; if (!out.includes(o.h)) out.push(o.h); }
+  return out;
+}
+
+// 한 글자의 다른 읽기 — 성조 문제에서 이 읽기가 오답 보기로 나오면 사실은 맞는 답이 된다
+const POLY = { 只: ["zhī"], 分: ["fèn"], 要: ["yāo"], 和: ["hè", "huò", "huó", "hú"], 看: ["kān"], 号: ["háo"], 上: ["shǎng"], 几: ["jī"],
+  那: ["nā", "nǎ", "nèi"], 把: ["bà"], 过: ["guō", "guo", "guò"], 还: ["huán"], 了: ["liǎo"], 得: ["dé", "děi"], 的: ["dí", "dì"], 都: ["dū"],
+  长: ["cháng", "zhǎng"], 行: ["háng"], 少: ["shào"], 好: ["hào"], 重: ["chóng"], 差: ["chā", "chāi"], 为: ["wéi"], 教: ["jiāo"], 假: ["jià"],
+  中: ["zhòng"], 当: ["dàng"], 间: ["jiàn"], 空: ["kòng"], 乐: ["yuè"], 种: ["zhòng"], 数: ["shǔ"], 发: ["fà"], 便: ["pián"] };
+
+function autoQuestions(it) {
+  if (!autoOk(it)) return [];
+  const base = { itemId: it.id, tag: topic(it.src), full: fullOf(it) };
+  const len = ZH_ONLY(it.h).length, m = dm(it);
+  const qs = [];
+  const newExpr = isNewExpr(it);
+  qs.push(Object.assign({}, base, {
+    kind: "meaning_mc", prompt: "이 말의 뜻은 무엇일까요?", showH: it.h, showP: newExpr ? it.p : null,
+    hint: "보기 두 개를 지웠어요. 다시 골라 보세요."
+  }, mcOf(m, pickOthers(it, 3, dm, o => o.t === it.t))));
+  if (newExpr) return qs; // 새 표현은 복습 2회까지 뜻 맞히기만
+  qs.push(Object.assign({}, base, {
+    kind: "hanzi_mc", prompt: `'${m}'${josa(m, "을", "를")} 중국어로 고르세요.`,
+    hint: "보기 두 개를 지웠어요. 다시 골라 보세요."
+  }, mcOf(it.h, pickOthers(it, 3, o => o.h, o => ZH_ONLY(o.h).length === len))));
+  if (S.kbd) {
+    const exZh = (EXP.get(it.id) || {}).h || ""; // 형식이 맞는 예문의 중국어 부분만 (병음이 힌트에 새지 않게)
+    const tp = tonePattern(it.p).split(" ")[0];
+    const hint = exZh.includes(ZH_ONLY(it.h)) && exZh !== it.h
+      ? `예문 속에서 떠올려 보세요: ${exZh.split(ZH_ONLY(it.h)).join("＿".repeat(len))}`
+      : `${len}글자예요. 성조는 ${tp}${josa(tp, "이에요", "예요")}.`;
+    qs.push(Object.assign({}, base, { kind: "hanzi_input", prompt: `'${m}'${josa(m, "을", "를")} 간체자로 써 보세요.`, accept: [ZH_ONLY(it.h)].concat(sameMeaning(it)), hint }));
+  }
+  const py = it.p.replace(/[?？!！.。]/g, "").trim();
+  // 같은 글자의 다른 읽기(过 guo/guò, 只 zhī 등)는 오답 보기로 쓰지 않는다
+  const otherReadings = new Set(ITEMS.filter(o => o.id !== it.id && ZH_ONLY(o.h) === ZH_ONLY(it.h)).map(o => o.p.replace(/[?？!！.。]/g, "").trim().toLowerCase())
+    .concat(len === 1 ? POLY[ZH_ONLY(it.h)] || [] : []));
+  // 글자 수와 음절 수가 같을 때만 不·一 자리를 알 수 있다. 다르면 不·一 이 든 단어는 성조 문제를 내지 않는다
+  const chars = [...ZH_ONLY(it.h)], nSyl = tones(py).length, keep = new Set();
+  chars.forEach((c, i) => { if (c === "不" || c === "一") keep.add(i); });
+  const toneOk = !keep.size || chars.length === nSyl;
+  const vars = toneOk ? toneVariants(py, keep).filter(v => !otherReadings.has(v)) : [];
+  if (tones(py).some(t => t) && vars.length === 3) {
+    const t = tones(py);
+    // 보기는 정답과 같은 대소문자로 (고유명사 첫 글자만 대문자인 경우). 안쪽에도 대문자가 있으면(Tiān'ān Mén) 모두 소문자로
+    const inner = py.slice(1) !== py.slice(1).toLowerCase();
+    const cased = v => (inner ? v : py.charAt(0) !== py.charAt(0).toLowerCase() ? v.charAt(0).toUpperCase() + v.slice(1) : v);
+    const t0 = t[0] ? t[0] + "성" : "경성";
+    qs.push(Object.assign({}, base, {
+      kind: "tone_mc", prompt: "이 말의 병음으로 맞는 것은?", showH: it.h,
+      hint: t.length > 1 ? `첫 글자는 ${t0}${josa(t0, "이에요", "예요")}. (뜻: ${m})` : `뜻은 '${m}'${josa(m, "이에요", "예요")}. 소리를 떠올려 보세요.`
+    }, mcOf(inner ? py.toLowerCase() : py, vars.map(cased))));
+  }
+  if (listenOn()) {
+    const others = listenWord(it);
+    if (others.length === 3) qs.push(Object.assign({}, base, {
+      kind: "listen_word", prompt: "잘 듣고, 들은 말을 고르세요.", listen: ZH_ONLY(it.h),
+      hint: "천천히 다시 들려 드릴게요. 보기 두 개를 지웠어요."
+    }, mcOf(it.h, others)));
+  }
+  return qs;
+}
+function authoredFor(it) {
+  return AUTHORED.filter(q => q.item === it.h && q.kind !== "speak").map(q => Object.assign({ itemId: it.id }, q));
+}
+// 문제를 실제로 만들지 않고 낼 수 있는 문제가 있는지만 본다 (첫 화면·출제 후보 고르기용)
+const AUTH_KINDS = new Map();
+AUTHORED.filter(q => q.kind !== "speak").forEach(q => AUTH_KINDS.set(q.item, (AUTH_KINDS.get(q.item) || []).concat(q.kind)));
+function hasQuestions(it) {
+  return autoOk(it) || !!EXP.get(it.id) || (AUTH_KINDS.get(it.h) || []).some(k => S.kbd || k !== "fill_input");
+}
+function questionsFor(it) {
+  const auth = authoredFor(it).filter(q => S.kbd || q.kind !== "fill_input");
+  // 새 표현은 복습 2회까지 뜻 맞히기·예문 읽기·상황 고르기만
+  if (isNewExpr(it)) return autoQuestions(it).concat(exQuestions(it, true), auth.filter(q => q.kind === "situation"));
+  return autoQuestions(it).concat(exQuestions(it, false), auth);
+}
+
+// ---------- 출제 대상 고르기 ----------
+// 1순위 마지막에 틀린 항목, 2순위 숙련도 '새로 배움·애매함', 3순위 나머지 (지침의 우선순위)
+// '한 번이라도 틀림'으로 두면 그 항목들이 영원히 앞을 차지해서 맞힌 항목의 복습 차례가 밀린다
+function priority(it) { const p = prog(it.id); return p.last === "bad" ? 0 : p.lv < 2 ? 1 : 2; }
+function pickItems(n) {
+  const t = today();
+  const cand = ITEMS.filter(hasQuestions);
+  const byDue = (a, b) => (prog(a.id).due || "").localeCompare(prog(b.id).due || "");
+  // 복습할 때가 된 항목: 우선순위 → 오래 밀린 순 (같으면 섞어서)
+  const due = shuffle(cand.filter(it => isReviewDue(it.id))).sort((a, b) => priority(a) - priority(b) || byDue(a, b));
+  const unseen = shuffle(cand.filter(it => !isSeen(it.id)));        // 아직 이 퀴즈에서 안 푼 항목
+  const later = cand.filter(it => isSeen(it.id) && !isDue(it.id)).sort(byDue);
+  // 복습이 밀려 있어도 안 푼 항목이 세트마다 몇 개씩은 섞여 들어오게 사이사이에 끼운다
+  const newSlots = Math.min(unseen.length, Math.max(2, Math.round(4 * n / 15)));
+  const every = Math.max(1, Math.floor(n / Math.max(1, newSlots)));
+  const head = [];
+  let di = 0, ui = 0;
+  while (di < due.length || ui < newSlots) {
+    const slot = ui < newSlots && (head.length % every === every - 1 || di >= due.length);
+    head.push(slot ? unseen[ui++] : due[di++]);
+  }
+  const ordered = head.concat(unseen.slice(ui), later);
+  const isOld = it => it.d && daysBetween(it.d, t) >= 21;
+  const isRecent = it => it.d && daysBetween(it.d, t) < 14;
+  const isGram = it => it.t !== "단어";
+  const isSitu = it => authoredFor(it).some(q => q.kind === "situation" || q.kind === "translate");
+  const scale = n / 15;
+  const need = { old: Math.round(8 * scale), recentMax: Math.max(2, Math.round(4 * scale)), topics: Math.round(6 * scale), gram: Math.round(4 * scale), word: Math.round(4 * scale), situ: Math.round(5 * scale) };
+
+  function run(strict) {
+    const picked = [], topicN = {};
+    let old = 0, recent = 0, gram = 0, situ = 0;
+    for (const it of ordered) {
+      if (picked.length >= n) break;
+      if (picked.includes(it)) continue;
+      const tp = topic(it.src);
+      if ((topicN[tp] || 0) >= 4) continue;
+      if (isRecent(it) && recent >= need.recentMax) continue;
+      if (strict) {
+        const left = n - picked.length;
+        const distinct = Object.keys(topicN).length;
+        if (left <= need.old - old && !isOld(it)) continue;
+        if (left <= need.topics - distinct && topicN[tp]) continue;
+        if (left <= need.gram - gram && !isGram(it)) continue;
+        if (left <= need.word - (picked.length - gram) && isGram(it)) continue;
+        if (left <= need.situ - situ && !isSitu(it)) continue;
+      }
+      picked.push(it); topicN[tp] = (topicN[tp] || 0) + 1;
+      if (isOld(it)) old++; if (isRecent(it)) recent++; if (isGram(it)) gram++; if (isSitu(it)) situ++;
+    }
+    return picked;
+  }
+  let picked = run(true);
+  if (picked.length < n) for (const it of run(false)) { if (picked.length >= n) break; if (!picked.includes(it)) picked.push(it); }
+  if (picked.length < n) for (const it of ordered) { if (picked.length >= n) break; if (!picked.includes(it)) picked.push(it); }
+  return picked;
+}
+
+function assignQuestions(items) {
+  const n = items.length, typeN = {};
+  let build = 0, mc = 0, situ = 0, tiles = 0;
+  const targetBuild = Math.floor(n / 2), targetSitu = Math.round(n * 5 / 15);
+  const typeCap = Math.max(2, Math.round(n * 4 / 15)); // 15문제 기준 한 유형 4문제까지
+  const tileCap = 1; // 카드 문제는 말하기에 2개가 따로 있으니 복습에서는 1개까지
+  const NEW_KINDS = ["sentence_mc", "listen"]; // 새로 넣은 유형은 한 세트에 1~2개씩 섞이게
+  // 손으로 쓴 문제가 있는 항목부터 정해야 상황형 몫이 단어 문제에 밀리지 않는다
+  const order = items.map((it, i) => i).sort((a, b) => authoredFor(items[b]).length - authoredFor(items[a]).length);
+  const out = [];
+  for (const i of order) {
+    const it = items[i];
+    const all = questionsFor(it);
+    let qs = all.filter(q => (typeN[TYPE_OF(q.kind)] || 0) < typeCap && !(IS_TILE(q.kind) && tiles >= tileCap));
+    if (!qs.length) qs = all.filter(q => !IS_TILE(q.kind) || tiles < tileCap);
+    if (!qs.length) qs = all;
+    if (!qs.length) continue; // 지금 설정으로 낼 수 있는 문제가 없는 항목은 건너뛴다
+    const score = q => {
+      let s = Math.random();
+      if (q.kind === "situation" || q.kind === "translate") s += situ < targetSitu ? 2 : -.5;
+      if (q.id) s += .6; // 손으로 쓴 문제를 조금 더 우선
+      if (NEW_KINDS.includes(TYPE_OF(q.kind))) s += (typeN[TYPE_OF(q.kind)] || 0) < 2 ? 1.2 : -.5;
+      s += IS_MC(q.kind) ? (mc < n - targetBuild ? 1 : 0) : (build < targetBuild ? 1 : 0);
+      return s;
+    };
+    const q = qs.slice().sort((a, b) => score(b) - score(a))[0];
+    typeN[TYPE_OF(q.kind)] = (typeN[TYPE_OF(q.kind)] || 0) + 1;
+    if (IS_TILE(q.kind)) tiles++;
+    if (IS_MC(q.kind)) mc++; else build++;
+    if (q.kind === "situation" || q.kind === "translate") situ++;
+    out[i] = Object.assign({ section: "review" }, q);
+  }
+  return out.filter(Boolean);
+}
+
+// 말하기 연습: 카드로 문장 만들기 + '이 상황에서 뭐라고 말할까' 고르기를 섞는다 (서로 다른 문법)
+function pickSpeak(n, reviewItems, reviewQs) {
+  const used = new Set(reviewItems.map(it => it.h));
+  const usedIds = new Set(reviewQs.map(q => q.id).filter(Boolean));
+  const rank = list => shuffle(list).sort((a, b) => (used.has(a.item) - used.has(b.item)) || (priority(byH.get(a.item)) - priority(byH.get(b.item))));
+  const nTile = Math.max(1, n - 1), tags = new Set(), tilesOut = [], sitOut = []; // 3문제면 카드 2 + 고르기 1
+  for (const q of rank(AUTHORED.filter(q => q.kind === "speak" && byH.has(q.item)))) {
+    if (tilesOut.length >= nTile) break;
+    if (tags.has(q.tag)) continue;
+    tags.add(q.tag); tilesOut.push(q);
+  }
+  const usedItems = new Set(tilesOut.map(q => q.item));
+  for (const q of rank(AUTHORED.filter(q => q.kind === "situation" && byH.has(q.item) && !usedIds.has(q.id) && !usedItems.has(q.item)))) {
+    if (tilesOut.length + sitOut.length >= n) break;
+    if (tags.has(q.tag)) continue;
+    tags.add(q.tag); sitOut.push(q);
+  }
+  // 카드 문제 사이에 고르기 문제를 끼워 연달아 나오지 않게
+  const out = [];
+  while (tilesOut.length || sitOut.length) { if (tilesOut.length) out.push(tilesOut.shift()); if (sitOut.length) out.push(sitOut.shift()); }
+  return out.map(q => Object.assign({ section: "speak", itemId: byH.get(q.item).id }, q));
+}
+// 카드 문제가 연달아 나오지 않게, 복습 마지막(말하기 바로 앞)에도 오지 않게 자리를 바꾼다
+function spreadTiles(list) {
+  for (let i = 1; i < list.length; i++) {
+    if (!(IS_TILE(list[i].kind) && IS_TILE(list[i - 1].kind))) continue;
+    const j = list.findIndex((q, k) => k > i && !IS_TILE(q.kind) && !(k + 1 < list.length && IS_TILE(list[k + 1].kind)));
+    if (j > 0) [list[i], list[j]] = [list[j], list[i]];
+  }
+  const last = list.length - 1;
+  if (last > 0 && IS_TILE(list[last].kind)) {
+    const j = list.findIndex((q, k) => k < last && !IS_TILE(q.kind) && !(k > 0 && IS_TILE(list[k - 1].kind)) && !IS_TILE(list[k + 1].kind));
+    if (j >= 0) [list[last], list[j]] = [list[j], list[last]];
+  }
+  return list;
+}
+
+function newSession(short) {
+  const nReview = short ? 8 : 12, nSpeak = short ? 2 : 3;
+  const picked = pickItems(nReview + 4);
+  const items = picked.slice(0, nReview), spare = picked.slice(nReview);
+  const assigned = assignQuestions(items);
+  // 카드 문제밖에 없는 항목(어순 패턴 등) 때문에 복습 쪽 카드 문제가 1개를 넘으면 예비 항목의 다른 유형으로 바꾼다
+  let over = assigned.filter(q => IS_TILE(q.kind)).length - 1;
+  while (over > 0 && spare.length) {
+    const sp = spare.shift(), alt = questionsFor(sp).filter(q => !IS_TILE(q.kind));
+    if (!alt.length) continue;
+    const k = assigned.map(q => IS_TILE(q.kind)).lastIndexOf(true);
+    items[items.findIndex(it => it.id === assigned[k].itemId)] = sp;
+    assigned[k] = Object.assign({ section: "review" }, alt[rnd(alt.length)]);
+    over--;
+  }
+  const review = spreadTiles(shuffle(assigned));
+  const speak = pickSpeak(nSpeak, items, review);
+  const topics = {};
+  items.forEach(it => { const tp = topic(it.src); topics[tp] = (topics[tp] || 0) + 1; });
+  const top = Object.entries(topics).sort((a, b) => b[1] - a[1]).slice(0, 2).map(x => x[0]);
+  const qs = review.concat(speak);
+  if (!qs.length) return false; // 데이터를 못 불러온 경우 — 빈 세트를 '전부 맞힘'으로 기록하지 않는다
+  db.session = { v: SESSION_V, date: today(), qs, idx: 0, res: [], focus: top.join("·") };
+  save();
+  return true;
+}
+// 세션을 끝낸다: 답한 문제만 복습 기록에 반영하고, 절반 넘게 풀었으면 그날을 '복습한 날'로 남긴다
+// (결과 화면을 안 보고 닫거나, 자정을 넘기거나, 새로 시작해도 푼 기록이 사라지지 않게)
+function finalize(ses) {
+  if (!ses || ses.applied) return;
+  applyResults(ses);
+  ses.applied = true;
+  const answered = ses.res.filter(r => r && r !== "skip").length;
+  if (answered >= Math.ceil(ses.qs.length / 2) && !db.days.includes(ses.date)) db.days.push(ses.date);
+  db.days = db.days.slice(-400); // 기록이 끝없이 늘지 않게 최근 것만 남긴다
+  save();
+}
+// 아직 다 안 푼 세션 (날짜가 지나도 이어 풀 수 있다)
+function openSession() {
+  const s = db.session;
+  return s && !s.applied && s.idx < s.qs.length ? s : null;
+}
+
+// ---------- 채점 (나중에 Claude 채점으로 바꿀 자리) ----------
+function grade(q, ans) {
+  if (q.choices) return { ok: ans === q.answer };
+  if (q.accept) {
+    const ok = q.accept.some(a => norm(a) === norm(ans));
+    return { ok, why: ok ? "" : diagnose(norm(ans), norm(q.accept[0])) };
+  }
+  if (q.answers) {
+    const got = ans.join("");
+    const k = q.answers.findIndex(seq => seq.join("") === got);
+    return { ok: k >= 0, k };
+  }
+  return { ok: false };
+}
+function diagnose(got, want) {
+  if (!got) return "";
+  const other = ITEMS.find(it => ZH_ONLY(it.h) === got);
+  if (other) return `입력한 ${got}(${other.p})는 '${dm(other)}'${josa(dm(other), "이라는", "라는")} 뜻이에요. 다른 단어를 떠올렸어요.`;
+  if (got.length === want.length) {
+    const diff = [...got].filter((c, i) => c !== want[i]).length;
+    if (diff === 1) return "글자 하나만 달라요. 비슷한 글자를 고른 것 같아요.";
+  }
+  if ([...got].some(c => want.includes(c))) return "일부 글자는 맞았어요. 비슷한 글자가 섞였는지 확인해 보세요.";
+  return "다른 단어를 떠올린 것 같아요.";
+}
+
+// ---------- 발음 듣기 ----------
+const canSpeak = "speechSynthesis" in window;
+// 이 기기에 중국어 음성이 있는지: null = 아직 모름(음성 목록을 불러오는 중), true/false
+let ZH_VOICE = canSpeak ? null : false;
+function zhVoice() {
+  // 광둥어(zh-HK) 음성은 표준어 발음이 아니라서 쓰지 않는다
+  const vs = speechSynthesis.getVoices().filter(v => !/HK|yue|cantonese/i.test(v.lang + " " + v.name));
+  return vs.find(v => /^zh[-_]CN/i.test(v.lang)) || vs.find(v => /^(zh|cmn)/i.test(v.lang));
+}
+// 발음 듣기 버튼은 중국어 음성이 없다고 확인된 기기에서는 숨긴다
+function canHear() { if (ZH_VOICE === null) checkVoices(); return canSpeak && ZH_VOICE !== false; }
+function checkVoices() {
+  if (!canSpeak) return;
+  const vs = speechSynthesis.getVoices();
+  if (vs.length) ZH_VOICE = !!zhVoice();
+}
+// 듣기 문제는 중국어 음성이 확인된 기기에서, 사용자가 끄지 않았을 때만 낸다
+function listenOn() { if (ZH_VOICE === null) checkVoices(); return S.listen !== false && ZH_VOICE === true; }
+if (canSpeak && speechSynthesis.addEventListener) speechSynthesis.addEventListener("voiceschanged", checkVoices);
+function say(text, rate) {
+  if (!canSpeak) return;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text.replace(/[A-Za-z가-힣+~]/g, ""));
+    u.lang = "zh-CN"; u.rate = rate || .8;
+    const v = zhVoice();
+    if (v) u.voice = v;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+// ---------- 연속 학습일 ----------
+function streak() {
+  const days = new Set(db.days);
+  let d = today(), n = 0;
+  if (!days.has(d)) d = addDays(d, -1); // 오늘 아직 안 했으면 어제까지의 연속 기록을 보여 준다
+  while (days.has(d)) { n++; d = addDays(d, -1); }
+  return n;
+}
+function StreakRow() {
+  const n = streak(), doneToday = db.days.includes(today());
+  const t = today(), dow = (new Date(t + "T00:00:00").getDay() + 6) % 7; // 월요일 = 0
+  const monday = addDays(t, -dow);
+  const week = el("div", { class: "week", "aria-label": "이번 주 복습한 날" }, [..."월화수목금토일"].map((name, i) => {
+    const d = addDays(monday, i);
+    return el("span", { class: (db.days.includes(d) ? "on" : "") + (d === t ? " today" : ""), title: d }, name);
+  }));
+  const line = n === 0
+    ? el("div", { class: "line" }, el("b", null, "오늘 첫 복습을 시작해요"), el("small", null, "매일 하면 🔥가 쌓여요"))
+    : el("div", { class: "line" }, el("b", null, `🔥 ${n}일 연속 복습`), el("small", null, doneToday ? "오늘 복습 완료!" : "오늘도 이어 가요"));
+  return el("div", { class: "streak" }, line, week);
+}
+
+// ---------- 반응 효과 ----------
+function bump(node, cls) { node.classList.remove(cls); void node.offsetWidth; node.classList.add(cls); }
+function Tick() {
+  const s = el("span", { "aria-hidden": "true" });
+  s.innerHTML = '<svg class="tick" viewBox="0 0 26 26"><circle cx="13" cy="13" r="13"/><path d="M7.5 13.5l3.6 3.6 7.4-7.6"/></svg>';
+  return s.firstChild;
+}
+function confetti() {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const cv = el("canvas", { class: "confetti", "aria-hidden": "true" });
+  document.body.append(cv);
+  const ctx = cv.getContext("2d"), dpr = window.devicePixelRatio || 1;
+  const W = innerWidth, H = innerHeight;
+  cv.width = W * dpr; cv.height = H * dpr; ctx.scale(dpr, dpr);
+  const css = getComputedStyle(document.documentElement);
+  const colors = ["--accent", "--ok", "--warn", "--bad"].map(v => css.getPropertyValue(v).trim()).concat(["#f2c14e", "#7aa7e0"]);
+  const parts = Array.from({ length: 110 }, () => ({
+    x: W / 2 + (Math.random() - .5) * W * .3, y: H * .32,
+    vx: (Math.random() - .5) * 9, vy: -Math.random() * 11 - 4,
+    w: 6 + Math.random() * 6, h: 4 + Math.random() * 4,
+    r: Math.random() * Math.PI, vr: (Math.random() - .5) * .3, c: colors[rnd(colors.length)]
+  }));
+  const t0 = performance.now();
+  let last = t0;
+  setTimeout(() => cv.remove(), 3200); // 탭이 가려져 애니메이션이 멈춰도 꽃가루가 남지 않게
+  (function frame(t) {
+    const life = (t - t0) / 2600;
+    const k = Math.min(3, (t - last) / 16.7); // 화면 주사율과 상관없이 같은 속도로 움직이게
+    last = t;
+    ctx.clearRect(0, 0, W, H);
+    ctx.globalAlpha = Math.max(0, 1 - Math.max(0, life - .6) / .4);
+    for (const p of parts) {
+      p.vy += .32 * k; p.vx *= Math.pow(.99, k); p.x += p.vx * k; p.y += p.vy * k; p.r += p.vr * k;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.restore();
+    }
+    if (life < 1) requestAnimationFrame(frame); else cv.remove();
+  })(t0);
+}
+
+// ---------- 화면 ----------
+const app = document.getElementById("app");
+let renderedAt = 0;
+function mount(...nodes) { fill(app, ...nodes); renderedAt = Date.now(); window.scrollTo(0, 0); }
+// 화면이 바뀐 직후의 탭은 무시한다 — '다음 문제'를 두 번 빨리 누르면 새 화면의 보기가 눌리는 것 방지
+const fresh = () => Date.now() - renderedAt < 350;
+function applyBig() { document.documentElement.classList.toggle("big", !!S.big); }
+
+function Switch(on, onchange, label) {
+  const b = el("button", { class: "switch", role: "switch", "aria-checked": String(!!on), "aria-label": label });
+  b.addEventListener("click", () => { const v = b.getAttribute("aria-checked") !== "true"; b.setAttribute("aria-checked", String(v)); onchange(v); });
+  return b;
+}
+
+function Home() {
+  if (S.kbd == null) return KeyboardAsk();
+  const withQ = ITEMS.filter(hasQuestions);
+  const dueN = withQ.filter(it => isReviewDue(it.id)).length;   // 한 번 푼 항목 중 복습할 때가 된 것
+  const unseenN = withQ.filter(it => !isSeen(it.id)).length;     // 아직 안 푼 항목
+  const ses = openSession();
+  const start = short => {
+    const s = openSession();
+    if (s && s.res.some(Boolean) && !confirm("풀던 복습이 있어요. 새로 시작할까요?\n지금까지 푼 문제는 기록돼요.")) return;
+    if (s) finalize(s);
+    if (!newSession(short)) return alert("문제를 불러오지 못했어요. 인터넷 연결을 확인하고 새로고침해 주세요.");
+    Quiz();
+  };
+  const resumeLabel = ses && ses.date !== today()
+    ? `${koDate(ses.date).replace(/^\d+년 /, "").replace(/ \(.\)/, "")}에 풀던 복습 이어서 (${ses.idx + 1}번부터)`
+    : ses ? `이어서 풀기 (${ses.idx + 1}번부터)` : "";
+  mount(
+    el("h1", null, "중국어 복습 퀴즈"),
+    el("p", { class: "sub" }, koDate(today())),
+    STORAGE_OK ? null : el("div", { class: "feedback bad", style: "margin:0 0 14px" },
+      el("p", { class: "note", style: "margin:0" }, "이 브라우저에서는 복습 기록이 저장되지 않아요. 사생활 보호(시크릿) 모드나 카카오톡 안 브라우저라면, Safari·Chrome에서 직접 열어 주세요.")),
+    el("div", { class: "card" },
+      StreakRow(),
+      el("div", { class: "stat" },
+        el("div", null, el("b", null, dueN), el("span", null, "오늘 복습할 항목")),
+        el("div", null, el("b", null, unseenN), el("span", null, "아직 안 푼 항목"))
+      ),
+      el("div", { class: "mt" },
+        ses ? el("button", { class: "btn", onclick: Quiz }, resumeLabel) : null,
+        el("button", { class: ses ? "btn ghost" : "btn", onclick: () => start(false) }, ses ? "새로 시작하기" : "오늘의 복습 시작 · 15문제"),
+        el("button", { class: "btn ghost", onclick: () => start(true) }, "짧게 10문제만")
+      )
+    ),
+    el("div", { class: "card" },
+      el("div", { class: "toggle" },
+        el("div", null, "중국어로 직접 쓰는 문제", el("small", null, "휴대폰에 중국어 키보드가 있을 때 켜세요")),
+        Switch(S.kbd, v => { S.kbd = v; save(); }, "중국어로 직접 쓰는 문제")
+      ),
+      ListenToggle(),
+      el("div", { class: "toggle" },
+        el("div", null, "글자 크게"),
+        Switch(S.big, v => { S.big = v; save(); applyBig(); }, "글자 크게")
+      )
+    ),
+    el("p", { class: "foot" },
+      "복습 기록은 이 기기에만 저장돼요.", el("br"),
+      saveTip(), el("br"),
+      el("button", { class: "link", onclick: backup }, "기록 백업하기"), " · ",
+      el("button", { class: "link", onclick: restore }, "백업 불러오기"), " · ",
+      el("button", { class: "link", onclick: resetAll }, "기록 모두 지우기"))
+  );
+}
+// 기기에 맞는 저장 안내 — 아이폰 Safari 는 7일 동안 안 열면 기록을 지울 수 있지만 갤럭시는 그런 규칙이 없다
+function saveTip() {
+  const ua = navigator.userAgent || "";
+  const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  const kakao = /KAKAOTALK/i.test(ua);
+  if (kakao) return "카카오톡 안에서 열면 기록이 따로 저장돼요. 화면의 메뉴(⋮ 또는 ⋯)에서 '다른 브라우저로 열기'를 눌러 주세요.";
+  if (ios) return "아이폰은 7일 동안 안 열면 기록이 지워질 수 있어요. Safari 공유 버튼 → '홈 화면에 추가'를 해 두면 앱처럼 열리고 기록도 안전해요.";
+  if (/Android/.test(ua)) return /SamsungBrowser/.test(ua)
+    ? "갤럭시는 기록이 그대로 남아요. ≡ 메뉴 → '페이지 추가' → '홈 화면'을 누르면 앱처럼 바로 열 수 있어요."
+    : "갤럭시는 기록이 그대로 남아요. ⋮ 메뉴 → '홈 화면에 추가'를 누르면 앱처럼 바로 열 수 있어요.";
+  return "카카오톡 안 브라우저나 시크릿 모드에서는 기록이 따로 저장되거나 남지 않아요.";
+}
+// 기록을 코드 한 줄로 복사해 두었다가(카톡 '나에게 보내기' 등) 다른 기기나 브라우저에서 불러온다
+function backup() {
+  const code = "CNQ1:" + btoa(unescape(encodeURIComponent(JSON.stringify({ prog: db.prog, days: db.days, settings: S }))));
+  const done = () => alert("백업 코드를 복사했어요. 카카오톡 '나에게 보내기' 같은 곳에 붙여 넣어 보관하세요.");
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(done, () => prompt("아래 코드를 길게 눌러 복사해 두세요.", code));
+  else prompt("아래 코드를 길게 눌러 복사해 두세요.", code);
+}
+function restore() {
+  const code = (prompt("백업 코드를 붙여 넣어 주세요.") || "").trim();
+  if (!code) return;
+  try {
+    if (!code.startsWith("CNQ1:")) throw 0;
+    const data = JSON.parse(decodeURIComponent(escape(atob(code.slice(5)))));
+    if (!data || typeof data.prog !== "object") throw 0;
+    if (!confirm("지금 기록을 백업한 기록으로 바꿀까요?")) return;
+    db.prog = data.prog; db.days = Array.isArray(data.days) ? data.days : [];
+    Object.assign(S, data.settings || {});
+    db.session = null; save(); applyBig(); Home();
+    alert("기록을 불러왔어요.");
+  } catch (e) { alert("백업 코드가 올바르지 않아요. 처음부터 끝까지 빠짐없이 붙여 넣었는지 확인해 주세요."); }
+}
+function ListenToggle() {
+  checkVoices();
+  const none = ZH_VOICE === false;
+  const sw = Switch(S.listen !== false && !none, v => { S.listen = v; save(); }, "듣기 문제");
+  if (none) sw.disabled = true;
+  return el("div", { class: "toggle" },
+    el("div", null, "듣기 문제", el("small", null, none
+      ? "이 기기에서 중국어 음성을 찾지 못해 듣기 문제는 나오지 않아요"
+      : "중국어 소리를 듣고 고르는 문제예요. 소리를 켜고 푸세요")),
+    sw);
+}
+function resetAll() {
+  if (!confirm("복습 기록을 모두 지울까요? 되돌릴 수 없어요.")) return;
+  db.prog = {}; db.session = null; db.days = []; save(); Home();
+}
+function KeyboardAsk() {
+  const set = v => { S.kbd = v; save(); Home(); };
+  mount(
+    el("h1", null, "중국어 복습 퀴즈"),
+    el("p", { class: "sub" }, "시작하기 전에 하나만 알려 주세요."),
+    el("div", { class: "card" },
+      el("p", { class: "prompt" }, "휴대폰에 중국어 키보드가 설치되어 있나요?"),
+      el("p", { class: "note" }, "있으면 간체자를 직접 쓰는 문제도 나와요. 없으면 고르기·카드 문제로만 나와요. 나중에 설정에서 바꿀 수 있어요."),
+      el("div", { class: "mt" },
+        el("button", { class: "btn", onclick: () => set(true) }, "있어요"),
+        el("button", { class: "btn ghost", onclick: () => set(false) }, "없어요")
+      )
+    )
+  );
+}
+
+function Quiz() {
+  const ses = db.session;
+  if (!ses) return Home();
+  // 답한 뒤 ←로 나갔다 이어 풀면 그 문제는 건너뛴다 (같은 문제를 다시 풀어 결과를 덮어쓰지 않게)
+  while (ses.idx < ses.qs.length && ses.res[ses.idx]) ses.idx++;
+  if (ses.idx >= ses.qs.length) return Results();
+  const q = ses.qs[ses.idx], total = ses.qs.length, no = ses.idx + 1;
+  const it = byId.get(q.itemId);
+  let tries = 0, done = false;
+
+  const barFill = el("i", { style: `width:${(ses.idx / total) * 100}%` });
+  const head = el("div", null,
+    el("div", { class: "top" },
+      el("button", { class: "back", "aria-label": "처음 화면으로", onclick: Home }, "←"),
+      el("div", { class: "bar" }, barFill),
+      el("span", { class: "count" }, `${no}번 / ${total}문제 중`)
+    ),
+    ses.idx === 0 ? el("p", { class: "sub" }, `${koDate(ses.date).replace(/ \(.\)/, "")} 복습 — ${ses.focus} 위주, 총 ${total}문제`) : null
+  );
+  const meta = el("div", { class: "meta" },
+    q.section === "speak" ? el("span", { class: "chip sec" }, "말하기 연습") : el("span", { class: "chip" }, KIND_LABEL[q.kind]),
+    q.tag ? el("span", { class: "chip" }, q.tag) : null
+  );
+  const body = el("div", { class: "card" }, meta, el("p", { class: "prompt" }, q.prompt));
+  if (q.showH) body.append(el("div", { class: "big-zh" }, q.showH));
+  if (q.sentence) body.append(el("div", { class: "sentence" }, q.sentence));
+  if (q.showP) body.append(el("div", { class: "big-py" }, q.showP));
+  if (q.listen) {
+    // 다음 문제 버튼을 누른 그 동작 안에서 바로 읽어야 휴대폰(특히 아이폰)에서 소리가 난다
+    say(q.listen);
+    body.append(el("div", { class: "listen" },
+      el("button", { class: "play", "aria-label": "다시 듣기", onclick: () => say(q.listen) }, "🔊"),
+      el("div", null,
+        el("div", { class: "note" }, "버튼을 누르면 다시 들려요"),
+        el("button", { class: "speak", onclick: () => say(q.listen, .55) }, "🐢 천천히 듣기"))));
+  }
+  const fb = el("div");
+  const next = el("button", { class: "btn mt", onclick: goNext }, no === total ? "결과 보기" : "다음 문제 →");
+
+  // 답 입력 영역
+  let submit, area, onDone = () => {};
+  if (q.choices) {
+    const zhChoices = /hanzi_mc|fill_mc|situation|listen_word/.test(q.kind);
+    const btns = q.choices.map((c, i) => el("button", { class: "choice" + (zhChoices ? " zhc" : ""), onclick: () => submit(i) },
+      el("span", { class: "n" }, i + 1), el("span", null, c)));
+    area = el("div", { class: "choices" }, btns);
+    if (q.listen) {
+      // 소리가 안 나면 이 문제는 기록 없이 넘긴다. 무음 모드일 수도 있으니 듣기 문제를 아예 끌지는 물어본다
+      const skip = el("button", { class: "link", onclick: () => {
+        if (done) return;
+        if (confirm("휴대폰이 무음 모드면 소리가 안 나요. 무음을 풀어도 안 들리면 '확인'을 눌러 듣기 문제를 꺼 주세요.\n('취소'를 누르면 이 문제만 넘어가요)")) {
+          S.listen = false;
+          // 이번 세트에 남은 듣기 문제도 뺀다
+          ses.qs = ses.qs.filter((x, k) => k <= ses.idx || !x.listen);
+        }
+        ses.res[ses.idx] = "skip"; ses.idx++; save(); Quiz();
+      } }, "소리가 안 들려요 — 넘어가기");
+      area = el("div", null, area, el("div", { style: "text-align:center" }, skip));
+    }
+    submit = i => {
+      if (done || fresh()) return;
+      const r = grade(q, i);
+      if (r.ok) { btns[i].classList.add("right"); return finish(tries ? "hint" : "ok"); }
+      btns[i].classList.add("picked"); btns[i].disabled = true;
+      bump(area, "shake");
+      if (tries === 0) {
+        tries = 1;
+        const wrong = btns.filter((b, k) => k !== q.answer && !b.disabled);
+        shuffle(wrong).slice(0, Math.max(0, wrong.length - 1)).forEach(b => { b.classList.add("gone"); b.disabled = true; });
+        btns[i].classList.add("gone");
+        showHint();
+      } else { btns[q.answer].classList.add("right"); finish("miss"); }
+    };
+  } else if (q.accept) {
+    const inp = el("input", { class: "answer", type: "text", autocomplete: "off", autocapitalize: "off", spellcheck: "false", lang: "zh-CN", placeholder: "간체자로 입력" });
+    const go = el("button", { class: "btn mt", onclick: () => submit() }, "확인");
+    inp.addEventListener("keydown", e => {
+      if (e.key !== "Enter" || e.isComposing || e.keyCode === 229) return; // 중국어 입력기의 후보 확정 엔터는 무시
+      e.preventDefault(); // 이 엔터가 '다음 문제' 버튼까지 눌러 버리지 않게 막는다
+      submit();
+    });
+    // 모르겠으면 정답을 바로 본다 (틀린 것으로 기록). 키보드 설정을 끈 뒤 이어 풀 때 빠져나갈 길도 된다
+    const giveUp = el("button", { class: "link", onclick: () => {
+      if (done) return;
+      go.remove(); giveUp.remove(); inp.disabled = true; finish("miss");
+    } }, "모르겠어요 — 정답 보기");
+    const warn = el("p", { class: "note", style: "color:var(--bad);text-align:center;min-height:1.6em;margin:6px 0 0" });
+    area = el("div", null, inp, warn, go, el("div", { style: "text-align:center" }, giveUp));
+    submit = () => {
+      if (done || !norm(inp.value)) return inp.focus();
+      // 한글·알파벳만 들어오면(키보드 전환 깜빡, 입력기 조합 중 확인) 기회를 쓰지 않는다
+      if (!/[一-鿿]/.test(inp.value)) { warn.textContent = "중국어 키보드로 간체자를 입력해 주세요."; return inp.focus(); }
+      warn.textContent = "";
+      const r = grade(q, inp.value);
+      if (r.ok) { go.remove(); giveUp.remove(); inp.disabled = true; return finish(tries ? "hint" : "ok"); }
+      bump(inp, "shake");
+      if (tries === 0) { tries = 1; showHint(r.why); inp.select(); }
+      else { go.remove(); giveUp.remove(); inp.disabled = true; finish("miss", r.why); }
+    };
+    setTimeout(() => inp.focus(), 50);
+  } else {
+    // 카드 배열
+    const slots = el("div", { class: "slots" }), pool = el("div", { class: "pool" });
+    let seq = [];
+    const tiles = shuffle(q.tiles.map((t, i) => ({ t, i })));
+    const poolBtns = tiles.map(o => el("button", { class: "tile", onclick: () => pick(o) }, o.t));
+    pool.append(...poolBtns);
+    function pick(o) {
+      if (done || fresh() || seq.includes(o)) return;
+      seq.push(o); poolBtns[tiles.indexOf(o)].classList.add("used"); draw();
+    }
+    function unpick(o) {
+      if (done) return;
+      seq = seq.filter(x => x !== o); poolBtns[tiles.indexOf(o)].classList.remove("used"); draw();
+    }
+    function draw() { fill(slots, seq.map(o => el("button", { class: "tile", onclick: () => unpick(o) }, o.t))); go.disabled = !seq.length; }
+    const reset = () => { seq.slice().forEach(unpick); };
+    const go = el("button", { class: "btn", disabled: true, onclick: () => submit() }, "확인");
+    const row = el("div", { class: "row" }, el("button", { class: "btn ghost", onclick: reset }, "다시 놓기"), go);
+    area = el("div", null, slots, pool, row);
+    onDone = () => { pool.remove(); row.remove(); }; // 답한 뒤에는 남은 카드와 버튼을 치운다
+    submit = () => {
+      if (done || !seq.length) return;
+      const r = grade(q, seq.map(o => o.t));
+      if (r.ok) return finish(tries ? "hint" : "ok", null, r.k);
+      bump(slots, "shake");
+      if (tries === 0) { tries = 1; showHint(); reset(); }
+      else finish("miss");
+    };
+  }
+  // 직접 쓰는 문제는 힌트를 입력칸 위에 — 휴대폰 키보드가 올라와 있어도 보이게
+  if (q.accept) body.append(fb, area); else body.append(area, fb);
+
+  function showHint(why) {
+    if (q.listen) say(q.listen, .55); // 듣기 문제의 힌트는 천천히 한 번 더
+    fill(fb, el("div", { class: "feedback hint" },
+      el("h3", null, "아쉬워요, 한 번 더!"),
+      why ? el("p", { class: "note" }, why) : null,
+      el("p", { class: "note" }, el("b", null, "힌트 "), q.hint || "다시 생각해 보세요.")
+    ));
+  }
+  function finish(result, why, k) {
+    done = true;
+    onDone();
+    ses.combo = result === "ok" ? (ses.combo || 0) + 1 : 0;
+    barFill.style.width = `${(no / total) * 100}%`;
+    if (result === "ok") bump(body, "pop");
+    const cls = result === "ok" ? "ok" : result === "hint" ? "hint" : "bad";
+    const title = result === "ok"
+      ? [Tick(), "정답이에요!", ses.combo >= 3 ? el("span", { class: "combo" }, `🔥 ${ses.combo}연속 정답`) : null]
+      : result === "hint" ? "힌트 받고 맞혔어요" : "정답을 확인해 보세요";
+    let full = q.full || fullOf(it);
+    const extra = [];
+    if (q.alts && q.alts.length) {
+      // 맞힌 순서의 문장을 크게 보여 주고, 나머지 정답은 '이렇게도 맞아요'로 붙인다
+      const all = [full].concat(q.alts.map(a => ({ h: a.h, p: a.p, m: full.m })));
+      const main = k > 0 && all[k] ? k : 0;
+      full = all[main];
+      all.filter((x, i) => i !== main).forEach(x =>
+        extra.push(el("p", { class: "note" }, el("b", null, "이렇게도 맞아요 "), el("span", { class: "zh" }, x.h), ` ${x.p}`)));
+    }
+    if (q.explain) extra.push(el("p", { class: "note" }, q.explain));
+    if (it && !q.explain) {
+      const tp = tonePattern(it.p);
+      if (tp) extra.push(el("p", { class: "note" }, el("b", null, "성조 "), tp));
+      if (it.pron && it.pron.length) extra.push(el("p", { class: "note" }, el("b", null, "발음 주의 "), it.pron.join(" · ")));
+      if (it.ex && it.ex.includes(" / ")) extra.push(el("p", { class: "note zh" }, el("b", null, "예문 "), it.ex));
+    }
+    fill(fb, el("div", { class: "feedback " + cls },
+      el("h3", null, title),
+      why && result === "miss" ? el("p", { class: "note" }, why) : null,
+      el("div", { class: "full" },
+        el("div", { class: "zh" }, full.h),
+        el("div", { class: "py" }, full.p),
+        el("div", null, full.m),
+        canHear() ? el("button", { class: "speak", onclick: () => say(full.h) }, "🔊 발음 듣기") : null
+      ),
+      extra
+    ), next);
+    ses.res[ses.idx] = result; save();
+    // 확인에 쓴 키 입력이 끝난 뒤에 초점을 옮긴다 — 다음 엔터 한 번으로 다음 문제로 간다
+    setTimeout(() => next.focus({ preventScroll: true }), 0);
+    fb.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+  function goNext() { ses.idx++; save(); Quiz(); }
+  mount(head, body);
+}
+
+function applyResults(ses) {
+  const base = ses.date, seen = {}; // 시작한 날 기준 (자정을 넘겨 끝내도 간격이 하루 밀리지 않게)
+  ses.qs.forEach((q, i) => {
+    const r = ses.res[i]; if (!r || r === "skip" || !q.itemId) return; // 소리가 안 나서 넘긴 문제는 기록하지 않는다
+    // 한 항목이 여러 번 나왔으면 하나라도 틀렸을 때 틀린 것으로 본다
+    seen[q.itemId] = seen[q.itemId] === "bad" || r !== "ok" ? "bad" : "ok";
+  });
+  for (const [id, r] of Object.entries(seen)) {
+    const p = Object.assign({}, prog(id));
+    // 맞히면 복습 횟수 +1 → 1회 3일, 2회 7일, 3회 14일, 4회 이상 30일 (원래 노션 퀴즈와 같은 방식)
+    if (r === "ok") { p.rc += 1; p.lv = Math.min(2, p.lv + 1); p.due = addDays(base, INTERVAL[Math.min(p.rc, 4)]); }
+    else { p.wc += 1; p.lv = Math.max(0, p.lv - 1); p.rc = 0; p.due = addDays(base, 1); }
+    p.last = r;
+    db.prog[id] = p;
+  }
+}
+
+function Results() {
+  const ses = db.session;
+  if (!ses) return Home();
+  const first = !ses.applied;
+  finalize(ses);
+  const answered = ses.res.filter(r => r && r !== "skip").length;
+  const n = ses.qs.length, cnt = { ok: 0, hint: 0, miss: 0 };
+  ses.res.forEach(r => { if (r in cnt) cnt[r]++; });
+  const missed = ses.qs.map((q, i) => ({ q, r: ses.res[i] })).filter(x => x.r === "hint" || x.r === "miss");
+  const when = {};
+  new Set(ses.qs.filter((q, i) => ses.res[i] && ses.res[i] !== "skip").map(q => q.itemId)).forEach(id => {
+    const n = daysBetween(ses.date, prog(id).due || ses.date);
+    when[n] = (when[n] || 0) + 1;
+  });
+  const plan = Object.keys(when).map(Number).sort((a, b) => a - b)
+    .map(n => `${n === 1 ? "내일" : n + "일 뒤"} ${when[n]}개`).join(", ");
+  mount(
+    el("h1", null, answered && cnt.ok === answered ? "전부 맞혔어요! 🎉" : "오늘 복습 끝!"),
+    el("p", { class: "sub" }, `${koDate(ses.date)} · ${n}문제`),
+    el("div", { class: "card" },
+      StreakRow(),
+      el("div", { class: "stat" },
+        el("div", null, el("b", { style: "color:var(--ok)" }, cnt.ok), el("span", null, "바로 맞힘")),
+        el("div", null, el("b", { style: "color:var(--warn)" }, cnt.hint), el("span", null, "힌트 후")),
+        el("div", null, el("b", { style: "color:var(--bad)" }, cnt.miss), el("span", null, "틀림"))
+      ),
+      el("p", { class: "note mt" }, "틀리거나 힌트를 받은 항목은 내일 다시 나와요. 맞힌 항목은 3일 → 7일 → 14일 → 30일 뒤로 복습 간격이 늘어나요.")
+    ),
+    missed.length ? el("div", { class: "card" },
+      el("p", { class: "prompt" }, "다시 볼 항목"),
+      el("ul", { class: "list" }, missed.map(({ q, r }) => {
+        const f = q.full || fullOf(byId.get(q.itemId));
+        return el("li", null,
+          el("div", null, el("span", { class: "zh" }, f.h), el("span", { class: "tag " + (r === "hint" ? "hint" : "bad") }, r === "hint" ? "힌트 후 맞힘" : "틀림")),
+          el("div", { class: "note", style: "color:var(--muted)" }, f.p),
+          el("div", { class: "note" }, f.m),
+          canHear() ? el("button", { class: "speak", onclick: () => say(f.h) }, "🔊 듣기") : null
+        );
+      }))
+    ) : null,
+    plan ? el("p", { class: "note", style: "text-align:center;color:var(--muted)" }, `오늘 푼 항목의 다음 복습: ${plan}`) : null,
+    el("button", { class: "btn mt", onclick: () => { db.session = null; save(); Home(); } }, "처음으로")
+  );
+  if (first) setTimeout(confetti, 150);
+}
+
+// 시작할 때 저장된 세션 정리: 형식이 바뀐 옛 세션, 다 풀고 결과를 안 본 세션은 푼 것만 기록해 둔다
+if (db.session && (db.session.v !== SESSION_V || !Array.isArray(db.session.qs))) {
+  try { finalize(db.session); } catch (e) {}
+  db.session = null; save();
+} else if (db.session && !db.session.applied && db.session.idx >= db.session.qs.length) {
+  finalize(db.session);
+}
+applyBig();
+if (canSpeak) speechSynthesis.getVoices();
+Home();
+})();
+</script>
+</body>
+</html>
