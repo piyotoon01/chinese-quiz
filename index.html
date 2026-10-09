@@ -270,7 +270,7 @@ const ZH_ONLY = s => s.replace(/[？！]/g, "");
 // 출처 → 주제 (같은 주제 4문제 제한·범위 분산용)
 function topic(src) {
   const rules = [
-    [/Lesson 4/, "가격·쇼핑"], [/Lesson 3/, "양사·허락"], [/Lesson 2/, "길 묻기"], [/교통/, "교통"],
+    [/Lesson 5/, "식사·약속"], [/Lesson 4/, "가격·쇼핑"], [/Lesson 3/, "양사·허락"], [/Lesson 2/, "길 묻기"], [/교통/, "교통"],
     [/양사/, "양사"], [/연결표현/, "연결 표현"], [/정도부사/, "정도부사"], [/청유형/, "제안"],
     [/문장순서/, "어순"], [/빨간책/, "기초 단어"], [/1음절/, "1음절 단어"], [/드라마/, "드라마 표현"],
     [/작문/, "작문 표현"], [/Claude/, "회화 표현"], [/새 표현/, "새 표현"], [/수업/, "수업 표현"],
@@ -278,6 +278,13 @@ function topic(src) {
   ];
   for (const [re, name] of rules) if (re.test(src)) return name;
   return src || "기타";
+}
+// 세트 고르기용 묶음 — '기초편'은 전체 항목의 절반이 넘어서, 한 묶음으로 두면 '같은 주제 4개까지'에 막혀
+// 작은 주제(연결 표현·수업 표현 등) 항목만 자꾸 나온다. 소주제(동사·날짜…)나 배운 달로 나눈다
+function group(it) {
+  const tp = topic(it.src);
+  if (tp !== "기초편") return tp;
+  return "기초편 " + (it.src.replace(/^.*기초편\s*/, "").trim() || (it.d || "").slice(0, 7));
 }
 
 // ---------- 병음 ----------
@@ -650,7 +657,7 @@ function pickItems(n) {
     for (const it of ordered) {
       if (picked.length >= n) break;
       if (picked.includes(it)) continue;
-      const tp = topic(it.src);
+      const tp = group(it);
       if ((topicN[tp] || 0) >= 4) continue;
       if (isRecent(it) && recent >= need.recentMax) continue;
       if (strict) {
@@ -712,14 +719,16 @@ function assignQuestions(items) {
 function pickSpeak(n, reviewItems, reviewQs) {
   const used = new Set(reviewItems.map(it => it.h));
   const usedIds = new Set(reviewQs.map(q => q.id).filter(Boolean));
-  const rank = list => shuffle(list).sort((a, b) => (used.has(a.item) - used.has(b.item)) || (priority(byH.get(a.item)) - priority(byH.get(b.item))));
+  // 복습에 이미 나온 항목, 아직 복습 날이 안 된 항목(오늘 푼 것 등)은 뒤로 — 같은 날 세트를 또 풀어도 말하기가 되풀이되지 않게
+  const notYet = q => { const it = byH.get(q.item); return isSeen(it.id) && !isDue(it.id); };
+  const rank = list => shuffle(list).sort((a, b) => (used.has(a.item) - used.has(b.item)) || (notYet(a) - notYet(b)) || (priority(byH.get(a.item)) - priority(byH.get(b.item))));
   const nTile = Math.max(1, n - 1), tags = new Set(), tilesOut = [], sitOut = []; // 3문제면 카드 2 + 고르기 1
+  const usedItems = new Set(); // 한 항목에 말하기 문제가 여럿(태그만 다름)이어도 한 세트에는 하나만
   for (const q of rank(AUTHORED.filter(q => q.kind === "speak" && byH.has(q.item)))) {
     if (tilesOut.length >= nTile) break;
-    if (tags.has(q.tag)) continue;
-    tags.add(q.tag); tilesOut.push(q);
+    if (tags.has(q.tag) || usedItems.has(q.item)) continue;
+    tags.add(q.tag); usedItems.add(q.item); tilesOut.push(q);
   }
-  const usedItems = new Set(tilesOut.map(q => q.item));
   for (const q of rank(AUTHORED.filter(q => q.kind === "situation" && byH.has(q.item) && !usedIds.has(q.id) && !usedItems.has(q.item)))) {
     if (tilesOut.length + sitOut.length >= n) break;
     if (tags.has(q.tag)) continue;
