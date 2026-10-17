@@ -240,6 +240,11 @@ input.answer:focus { outline: none; border-color: var(--accent); }
 .tag { font-size: .78em; font-weight: 800; padding: 1px 8px; border-radius: 8px; margin-left: 6px; vertical-align: 2px; }
 .tag.hint { background: var(--warn-soft); color: var(--warn); }
 .tag.bad { background: var(--bad-soft); color: var(--bad); }
+.tag.day { background: var(--chip); color: var(--muted); white-space: nowrap; display: inline-block; }
+.nsec { margin: 18px 0 8px; }
+.nudge { border-color: var(--bad); }
+.nudge .t { font-family: var(--round); font-size: 1.15em; font-weight: 900; margin: 0; }
+.nudge .s { color: var(--muted); margin: 4px 0 12px; }
 .foot { color: var(--muted); font-size: .8em; text-align: center; margin-top: 24px; }
 
 /* 오답 노트 */
@@ -303,13 +308,15 @@ input.answer:focus { outline: none; border-color: var(--accent); }
 </head>
 <body>
 <div class="wrap" id="app"></div>
-<script src="data/items.js?v=202610170520"></script>
-<script src="data/questions.js?v=202610170520"></script>
+<script src="data/items.js?v=202610170541"></script>
+<script src="data/questions.js?v=202610170541"></script>
+<script src="data/near.js?v=202610170541"></script>
 <script>
 "use strict";
 (() => {
 const ITEMS = window.ITEMS || [];
 const AUTHORED = window.AUTHORED || [];
+const NEAR = window.NEAR || {}; // 예문 → 정답과 한 군데만 다른 오답 뜻 3개 (없으면 다른 예문의 뜻으로)
 const byId = new Map(ITEMS.map(it => [it.id, it]));
 const byH = new Map(ITEMS.map(it => [it.h, it]));
 const INTERVAL = [1, 3, 7, 14, 30]; // 복습 횟수 0회→1일, 1회→3일, 2회→7일, 3회→14일, 4회 이상→30일
@@ -325,6 +332,8 @@ function load() {
 try { localStorage.setItem(KEY + ".test", "1"); localStorage.removeItem(KEY + ".test"); } catch (e) { STORAGE_OK = false; }
 const db = Object.assign({ prog: {}, settings: {}, session: null, days: [], notes: {} }, load());
 function save() { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) { STORAGE_OK = false; } }
+// 브라우저가 저장 공간이 모자랄 때 이 사이트 기록부터 지우지 않게 부탁한다 (안 되는 브라우저는 그냥 넘어감)
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {}); } catch (e) {}
 const S = db.settings;
 
 // ---------- 날짜 ----------
@@ -466,7 +475,9 @@ function isNewExpr(it) { return /새 표현/.test(it.src) && prog(it.id).rc <= 2
 // 자동 문제에서 뺄 항목
 const AUTO_SKIP = new Set(["连动文", "麻"]);                       // 문법 용어, 성조 연습용 글자
 const WORD_SKIP = new Set(["的", "吧", "呢", "吗", "和"]);         // 뜻·간체자 맞히기에 맞지 않는 조사 — 예문 문제로만 낸다
-const LISTEN_SKIP = new Set(["只", "支"]);                         // 음성이 只를 zhī 로 읽기도 해서 소리로 못 가른다
+const LISTEN_SKIP = new Set(["只", "支", "还", "几"]);             // 한 글자만 읽히면 음성이 다른 소리로 읽기도 한다 (只 zhī, 还 huán, 几 jī)
+// 이 기기에서 '소리가 이상해요'를 누른 말 — 다음부터 듣기 문제로 내지 않는다 (설정 화면에 목록이 남는다)
+const oddSound = t => (S.odd || []).includes(ZH_ONLY(String(t)));
 // 过 는 경성 조사(guo, 경험)만 빼고 '지나다'(guò)는 낸다
 const isParticle = it => WORD_SKIP.has(ZH_ONLY(it.h)) || (ZH_ONLY(it.h) === "过" && !tones(it.p).some(t => t));
 const autoOk = it => simpleWord(it) && !AUTO_SKIP.has(ZH_ONLY(it.h)) && !isParticle(it);
@@ -534,12 +545,13 @@ function sameMeaning(it) {
   return [...new Set(items.concat(group))].filter(x => x !== h);
 }
 // 오답 보기 n개: val(항목) 값이 겹치지 않게, 뜻이 겹치는 항목은 빼고, prefer 에 맞는 것부터
+// prefer 가 배열이면 앞 조건부터 차례로 (같은 묶음 → 같은 종류 → 나머지) — 같은 단원 단어끼리 겨뤄야 헷갈리고 공부가 된다
 function pickOthers(it, n, val, prefer) {
-  const mine = val(it);
+  const mine = val(it), tiers = [].concat(prefer);
   const pool = ITEMS.filter(o => o.id !== it.id && autoOk(o) && !clash(it, o) && val(o) && val(o) !== mine);
-  const good = shuffle(pool.filter(prefer)), rest = shuffle(pool.filter(o => !prefer(o)));
+  const rank = o => { const k = tiers.findIndex(f => f(o)); return k < 0 ? tiers.length : k; };
   const out = [];
-  for (const o of good.concat(rest)) { if (out.length >= n) break; if (!out.includes(val(o))) out.push(val(o)); }
+  for (const o of shuffle(pool).sort((a, b) => rank(a) - rank(b))) { if (out.length >= n) break; if (!out.includes(val(o))) out.push(val(o)); }
   return out;
 }
 function mcOf(correct, others) {
@@ -607,17 +619,24 @@ function exDistractors(it, ex) {
 function exQuestions(it, newExpr) {
   const ex = EXP.get(it.id);
   if (!ex) return [];
-  const others = exDistractors(it, ex);
+  // 10/17 사용자: 오답이 전혀 다른 문장이라 안 헷갈린다 → 사람·숫자·시간·동사 하나만 바꾼 뜻(NEAR)을 먼저 쓴다
+  const near = (NEAR[ex.h] || []).filter(m => kcore(m) !== kcore(ex.m));
+  const distract = () => (near.length === 3 ? near : exDistractors(it, ex));
+  const others = distract();
   if (others.length < 3) return [];
   const base = { itemId: it.id, tag: topic(it.src), full: ex, explain: `핵심 표현: ${it.h} (${it.p}) — ${it.m}` };
   const qs = [Object.assign({}, base, {
     kind: "sentence_mc", prompt: ex.phrase ? "이 말의 뜻은 무엇일까요?" : "이 문장의 뜻은 무엇일까요?", sentence: ex.h, showP: newExpr ? ex.p : null,
     hint: `보기 두 개를 지웠어요. ${autoOk(it) ? `${it.h}는 '${dm(it)}'${josa(dm(it), "이라는", "라는")} 뜻이에요.` : "다시 천천히 읽어 보세요."}`
   }, mcOf(ex.m, others))];
-  if (!newExpr && listenOn()) qs.push(Object.assign({}, base, {
+  if (!newExpr && listenOn() && !oddSound(ex.h)) qs.push(Object.assign({}, base, {
     kind: "listen_sent", prompt: ex.phrase ? "잘 듣고, 들은 말의 뜻을 고르세요." : "잘 듣고, 들은 문장의 뜻을 고르세요.", listen: ex.h,
     hint: "천천히 다시 들려 드릴게요. 보기 두 개를 지웠어요."
-  }, mcOf(ex.m, exDistractors(it, ex))));
+  }, mcOf(ex.m, (() => {
+    // 소리로는 他·她·它 가 똑같이 tā — '그↔그녀'만 다른 오답은 듣기에서 못 가르니 그때는 예전 방식 오답으로
+    const he = s => kcore(s).replace(/그녀|그여자|그남자|그것|걔/g, "그");
+    return near.length === 3 && near.every(m => he(m) !== he(ex.m)) ? near : exDistractors(it, ex);
+  })())));
   return qs;
 }
 // 병음을 음절로 나눈다: zhōngguó → zhōng·guó. 띄어쓰기·문장부호·' 로 먼저 끊고,
@@ -670,7 +689,7 @@ const sound = p => String(p).toLowerCase()
   .replace(/([a-zāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜü][aeiouüāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜn])r(?=\s|'|$)/g, "$1") // diǎnr → diǎn (성조 붙은 모음 뒤도)
   .replace(/[^a-zāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜü]/g, "");
 // 듣기 문제에 쓸 수 있는 단어: 경성뿐인 조사(吗 ma, 吧 ba)는 음성이 따로 읽으면 성조가 붙어 구분이 안 된다
-const listenable = o => autoOk(o) && !LISTEN_SKIP.has(ZH_ONLY(o.h)) && tones(o.p).some(t => t);
+const listenable = o => autoOk(o) && !LISTEN_SKIP.has(ZH_ONLY(o.h)) && !oddSound(o.h) && tones(o.p).some(t => t);
 function listenWord(it) {
   if (!listenable(it)) return [];
   const me = sound(it.p);
@@ -705,12 +724,12 @@ function autoQuestions(it) {
   qs.push(Object.assign({}, base, {
     kind: "meaning_mc", prompt: "이 말의 뜻은 무엇일까요?", showH: it.h, showP: newExpr ? it.p : null,
     hint: "보기 두 개를 지웠어요. 다시 골라 보세요."
-  }, mcOf(m, pickOthers(it, 3, dm, o => o.t === it.t))));
+  }, mcOf(m, pickOthers(it, 3, dm, [o => group(o) === group(it) && o.t === it.t, o => o.t === it.t]))));
   if (newExpr) return qs; // 새 표현은 복습 2회까지 뜻 맞히기만
   qs.push(Object.assign({}, base, {
     kind: "hanzi_mc", prompt: `'${m}'${josa(m, "을", "를")} 중국어로 고르세요.`,
     hint: "보기 두 개를 지웠어요. 다시 골라 보세요."
-  }, mcOf(it.h, pickOthers(it, 3, o => o.h, o => ZH_ONLY(o.h).length === len))));
+  }, mcOf(it.h, pickOthers(it, 3, o => o.h, [o => group(o) === group(it) && ZH_ONLY(o.h).length === len, o => ZH_ONLY(o.h).length === len]))));
   if (S.kbd) {
     const exZh = (EXP.get(it.id) || {}).h || ""; // 형식이 맞는 예문의 중국어 부분만 (병음이 힌트에 새지 않게)
     const tp = tonePattern(it.p).split(" ")[0];
@@ -748,8 +767,13 @@ function autoQuestions(it) {
   }
   return qs;
 }
+// 손으로 쓴 객관식은 정답을 첫 칸에 적은 게 많아서(10/17 사용자: '정답이 거의 1번') 낼 때마다 보기를 섞는다
 function authoredFor(it) {
-  return AUTHORED.filter(q => q.item === it.h && q.kind !== "speak").map(q => Object.assign({ itemId: it.id }, q));
+  return AUTHORED.filter(q => q.item === it.h && q.kind !== "speak").map(q => {
+    const o = Object.assign({ itemId: it.id }, q);
+    if (q.choices) Object.assign(o, mcOf(q.choices[q.answer], q.choices.filter((c, i) => i !== q.answer)));
+    return o;
+  });
 }
 // 문제를 실제로 만들지 않고 낼 수 있는 문제가 있는지만 본다 (첫 화면·출제 후보 고르기용)
 const AUTH_KINDS = new Map();
@@ -879,7 +903,8 @@ function pickSpeak(n, reviewItems, reviewQs) {
   // 카드 문제 사이에 고르기 문제를 끼워 연달아 나오지 않게
   const out = [];
   while (tilesOut.length || sitOut.length) { if (tilesOut.length) out.push(tilesOut.shift()); if (sitOut.length) out.push(sitOut.shift()); }
-  return out.map(q => Object.assign({ section: "speak", itemId: byH.get(q.item).id }, q));
+  return out.map(q => Object.assign({ section: "speak", itemId: byH.get(q.item).id }, q,
+    q.choices ? mcOf(q.choices[q.answer], q.choices.filter((c, i) => i !== q.answer)) : {}));
 }
 // 카드 문제가 연달아 나오지 않게, 복습 마지막(말하기 바로 앞)에도 오지 않게 자리를 바꾼다
 function spreadTiles(list) {
@@ -942,21 +967,34 @@ function openSession() {
 // ---------- 오답 노트 ----------
 // 틀린(힌트 받고 맞힌 것 포함) 항목마다 마지막으로 틀린 문제와 내가 낸 답을 남긴다. 틀린 횟수·지금 상태는 prog 의 wc·last
 function answerText(q) { return q.choices ? q.choices[q.answer] : q.accept ? q.accept[0] : (q.full || {}).h || ""; }
-function notePut(id, q, mine, date) {
-  db.notes[id] = { d: date, k: q.kind, pr: q.prompt, s: q.sentence || q.showH || "", l: q.listen || "", a: answerText(q), m: mine || [], f: q.full || null };
+// 10/17 사용자 요청으로 바뀐 규칙: 틀린 단어는 다음 복습에서 맞혀도 노트에 계속 쌓인다.
+// 20개(NOTE_GOAL)쯤 모이면 '오답 퀴즈'를 권하고, 오답 퀴즈에서 맞히면 풀려서(빠져서) 없어지고, 또 틀리면 r(차수)이 올라 '2차 오답'이 된다
+const NOTE_GOAL = 20;
+function notePut(id, q, mine, date, again) {
+  const old = db.notes[id];
+  const r = old ? (old.r || 1) + (again ? 1 : 0) : 1;
+  db.notes[id] = { d: date, k: q.kind, pr: q.prompt, s: q.sentence || q.showH || "", l: q.listen || "", a: answerText(q), m: mine || [], f: q.full || null, r, o: 1 };
   const ids = Object.keys(db.notes);
   if (ids.length > 400) ids.sort((a, b) => db.notes[a].d.localeCompare(db.notes[b].d)).slice(0, ids.length - 400).forEach(k => delete db.notes[k]);
 }
-// 지금 틀린 상태(마지막에 틀림)인 항목. 최근에 틀린 순
-function noteItems() {
-  const noteDate = it => (db.notes[it.id] || {}).d || "";
-  return ITEMS.filter(it => { const p = db.prog[it.id]; return p && p.wc > 0 && p.last === "bad"; })
-    .sort((a, b) => noteDate(b).localeCompare(noteDate(a)) || prog(b.id).wc - prog(a.id).wc);
+// 예전(10/17 전) 노트는 '지금 틀린 상태'만 보여 줘서 지난 회차 오답이 숨어 있었다 → 남아 있는 기록을 모두 1차 오답으로 다시 연다
+function upgradeNotes() {
+  for (const id in db.notes) { const n = db.notes[id]; if (n && n.o == null) { n.o = 1; n.r = n.r || 1; } }
 }
-// 오답만 다시 풀기 — 답할 때마다 바로 기록하고(중간에 나가도 남는다), 연속 복습일에는 세지 않는다
+upgradeNotes();
+// 아직 안 풀린 오답. 차수 높은 것(2차 이상) 먼저, 그다음 최근에 틀린 순
+function noteItems() {
+  const n = it => db.notes[it.id];
+  return ITEMS.filter(it => n(it) && n(it).o)
+    .sort((a, b) => (n(b).r || 1) - (n(a).r || 1) || n(b).d.localeCompare(n(a).d) || prog(b.id).wc - prog(a.id).wc);
+}
+// 오답 퀴즈 — 답할 때마다 바로 기록하고(중간에 나가도 남는다), 연속 복습일에는 세지 않는다
 let practiceSes = null;
-function newPractice() {
-  const items = noteItems().filter(hasQuestions).sort((a, b) => prog(b.id).wc - prog(a.id).wc).slice(0, 10);
+function newPractice(only) {
+  // 오래 묵은 것·여러 번 틀린 것부터 최대 20개 (결과 화면에서는 방금 틀린 단어만: only)
+  const n = it => db.notes[it.id];
+  const items = noteItems().filter(it => hasQuestions(it) && (!only || only.includes(it.id)))
+    .sort((a, b) => (n(b).r || 1) - (n(a).r || 1) || prog(b.id).wc - prog(a.id).wc || n(a).d.localeCompare(n(b).d)).slice(0, NOTE_GOAL);
   if (!items.length) return false;
   practiceSes = { practice: true, date: today(), qs: spreadTiles(shuffle(assignQuestions(items))), idx: 0, res: [], wrong: [] };
   return true;
@@ -965,9 +1003,9 @@ function applyPractice(ses, i) {
   const q = ses.qs[i], r = ses.res[i];
   if (!r || r === "skip" || !q.itemId) return;
   const p = Object.assign({}, prog(q.itemId));
-  // 맞히면 오답 노트에서만 뺀다. 복습 날짜는 그대로 두고 정해진 날 복습에서 한 번 더 확인한다
-  if (r === "ok") p.last = "ok";
-  else { p.wc += 1; p.lv = Math.max(0, p.lv - 1); p.rc = 0; p.due = addDays(today(), 1); p.last = "bad"; notePut(q.itemId, q, ses.wrong[i], today()); }
+  // 바로 맞히면 오답 노트에서 풀린다. 복습 날짜는 그대로 두고 정해진 날 복습에서 한 번 더 확인한다
+  if (r === "ok") { p.last = "ok"; delete db.notes[q.itemId]; }
+  else { p.wc += 1; p.lv = Math.max(0, p.lv - 1); p.rc = 0; p.due = addDays(today(), 1); p.last = "bad"; notePut(q.itemId, q, ses.wrong[i], today(), true); }
   db.prog[q.itemId] = p; save();
 }
 
@@ -1135,7 +1173,7 @@ function Home() {
     if (!newSession(short)) return alert("문제를 불러오지 못했어요. 인터넷 연결을 확인하고 새로고침해 주세요.");
     Quiz();
   };
-  const openN = noteItems().length;
+  const notes = noteItems(), openN = notes.length, againN = notes.filter(it => (db.notes[it.id].r || 1) >= 2).length;
   const studied = withQ.length - unseenN; // 한 번이라도 풀어 본 단어 — 첫날부터 늘어나는 게 보이게
   const shortDay = d => koDate(d).replace(/^\d+년 /, "").replace(/ \(.\)/, "");
   // 첫 화면: ① 이번 주 도장 ② 오늘 할 공부 한 줄 + 시작 버튼 ③ 오답 노트·익힌 단어. 설정·백업은 ⚙ 화면으로
@@ -1164,17 +1202,33 @@ function Home() {
              el("button", { class: "link", onclick: () => start(true) }, "바쁜 날은 10문제만")]
       )
     ),
+    // 오답이 20개쯤 모이면 오답 퀴즈를 권한다
+    openN >= NOTE_GOAL ? el("div", { class: "card nudge" },
+      el("p", { class: "t" }, `📒 오답이 ${openN}개 모였어요`),
+      el("p", { class: "s" }, "오답 퀴즈로 한 번 정리해요. 맞히면 노트에서 풀리고, 또 틀리면 2차 오답으로 남아요."),
+      el("button", { class: "btn", onclick: () => startPractice() }, `오답 퀴즈 풀기 · ${Math.min(NOTE_GOAL, notes.filter(hasQuestions).length)}문제`)) : null,
     el("div", { class: "duo" },
       el("button", { class: "card mini", disabled: !openN, onclick: () => WrongNote() },
         el("span", { class: "mi" }, "📒"), el("b", null, "오답 노트"),
-        el("small", null, openN ? `틀린 단어 ${openN}개` : "틀린 단어가 없어요")),
+        el("small", null, openN ? `${openN} / ${NOTE_GOAL}개` + (againN ? ` · 2차 ${againN}` : "") : "틀린 단어가 없어요"),
+        openN ? el("div", { class: "pbar" }, el("i", { style: `width:${Math.min(100, Math.round(openN / NOTE_GOAL * 100))}%` })) : null),
       el("div", { class: "card mini" },
         el("span", { class: "mi" }, "🌱"), el("b", null, "공부한 단어"),
         el("small", null, `${studied} / ${withQ.length}개`),
         el("div", { class: "pbar" }, el("i", { style: `width:${Math.round(studied / Math.max(1, withQ.length) * 100)}%` })))
     ),
+    BackupNag(),
     el("p", { class: "foot" }, `만든 사람 · ${MAKER} · © ${COPY_YEAR}`)
   );
+}
+// 휴대폰 브라우저는 기록을 지울 때가 있어서(아이폰 7일 규칙, 카톡 안 브라우저 등) 첫 화면에서 백업을 챙긴다
+// 기록이 하나도 없으면 '불러오기', 푼 기록이 있는데 7일 넘게 백업을 안 했으면 '백업하기'
+function BackupNag() {
+  const has = Object.keys(db.prog).length > 0;
+  if (!has) return el("button", { class: "link", onclick: restore }, "전에 풀던 기록이 사라졌나요? 백업 코드 불러오기");
+  const ago = db.bk ? daysBetween(db.bk, today()) : null;
+  if (ago != null && ago < 7) return null;
+  return el("button", { class: "link", onclick: backup }, ago == null ? "🔒 기록을 아직 백업 안 했어요 · 지금 백업하기" : `🔒 마지막 백업 ${ago}일 전 · 지금 백업하기`);
 }
 // 만든 사람·출처 표시 (10/11 사용자: 이름은 '삐요'로). 일부 예문이 수업 교재에서 왔으니 그 사실도 함께 적는다
 const MAKER = "삐요", COPY_YEAR = 2026;
@@ -1210,6 +1264,11 @@ function Settings() {
         el("button", { class: "btn ghost", onclick: restore }, "불러오기")),
       el("button", { class: "link danger", onclick: resetAll }, "기록 모두 지우기")
     ),
+    (S.odd || []).length ? el("div", { class: "card" },
+      el("p", { class: "label" }, "소리가 이상하다고 뺀 말"),
+      el("p", { class: "note" }, "듣기 문제로 다시 나오지 않아요. 만든 사람에게 이 목록을 알려 주면 고칠게요."),
+      el("p", { class: "zh", style: "margin:0;line-height:1.8" }, S.odd.join(" · ")),
+      el("button", { class: "link", onclick: () => { S.odd = []; save(); Settings(); } }, "목록 비우기 (다시 듣기 문제로 내기)")) : null,
     About()
   );
 }
@@ -1233,6 +1292,7 @@ function saveTip() {
 }
 // 기록을 코드 한 줄로 복사해 두었다가(카톡 '나에게 보내기' 등) 다른 기기나 브라우저에서 불러온다
 function backup() {
+  db.bk = today(); save(); // 첫 화면의 '백업한 지 N일' 알림용
   const code = "CNQ1:" + btoa(unescape(encodeURIComponent(JSON.stringify({ prog: db.prog, days: db.days, settings: S, notes: db.notes }))));
   const done = () => alert("백업 코드를 복사했어요. 카카오톡 '나에게 보내기' 같은 곳에 붙여 넣어 보관하세요.");
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(done, () => prompt("아래 코드를 길게 눌러 복사해 두세요.", code));
@@ -1248,6 +1308,7 @@ function restore() {
     if (!confirm("지금 기록을 백업한 기록으로 바꿀까요?")) return;
     db.prog = data.prog; db.days = Array.isArray(data.days) ? data.days : [];
     db.notes = data.notes && typeof data.notes === "object" ? data.notes : {}; // 오답 노트가 생기기 전 백업에는 없다
+    upgradeNotes();
     Object.assign(S, data.settings || {});
     db.session = null; save(); applyBig(); Home();
     alert("기록을 불러왔어요.");
@@ -1280,7 +1341,9 @@ function KeyboardAsk() {
         el("button", { class: "btn", onclick: () => set(true) }, "있어요"),
         el("button", { class: "btn ghost", onclick: () => set(false) }, "없어요")
       )
-    )
+    ),
+    // 기록이 날아가 처음 화면으로 돌아온 사람이 바로 되살릴 수 있게
+    el("button", { class: "link", onclick: restore }, "전에 풀던 기록이 있어요 · 백업 코드 불러오기")
   );
 }
 
@@ -1310,7 +1373,7 @@ function Quiz(s) {
     )
   );
   // 문제 위에는 지시문만 크게. 유형·주제 태그는 빼고, 말하기 연습·오답 다시 풀기일 때만 작은 표시
-  const label = q.section === "speak" ? "🗣 말하기 연습" : ses.practice ? "📒 오답 다시 풀기" : "";
+  const label = q.section === "speak" ? "🗣 말하기 연습" : ses.practice ? "📒 오답 퀴즈" : "";
   const body = el("div", { class: "card qcard" }, label ? el("p", { class: "qlabel" }, label) : null, el("p", { class: "prompt" }, q.prompt));
   if (q.showH) body.append(el("div", { class: "big-zh" }, q.showH));
   if (q.sentence) body.append(el("div", { class: "sentence" }, q.sentence));
@@ -1345,7 +1408,13 @@ function Quiz(s) {
         }
         ses.res[ses.idx] = "skip"; ses.idx++; save(); Quiz(ses);
       } }, "소리가 안 들려요 — 넘어가기");
-      area = el("div", null, area, el("div", { style: "text-align:center" }, skip));
+      // 10/17 사용자: 소리가 이상한 문제가 있다 → 눌러 두면 이 말은 듣기 문제로 다시 안 나오고, 설정에 목록이 남는다
+      const odd = el("button", { class: "link", onclick: () => {
+        if (done) return;
+        S.odd = [...new Set((S.odd || []).concat(ZH_ONLY(q.listen)))];
+        ses.res[ses.idx] = "skip"; ses.idx++; save(); Quiz(ses);
+      } }, "소리가 이상해요 — 이 문제 빼기");
+      area = el("div", null, area, el("div", { style: "text-align:center" }, skip, odd));
     }
     submit = i => {
       if (done || fresh()) return;
@@ -1558,7 +1627,7 @@ function Results() {
         );
       }))
     ) : null,
-    missed.length ? el("button", { class: "btn", onclick: () => { leave(); startPractice(); } }, "틀린 단어 다시 풀기") : null,
+    missed.length ? el("button", { class: "btn", onclick: () => { leave(); startPractice(missed.map(x => x.q.itemId)); } }, "틀린 단어 다시 풀기") : null,
     el("button", { class: missed.length ? "btn ghost" : "btn", onclick: () => { leave(); Home(); } }, "처음으로")
   );
   if (first) setTimeout(confetti, 150);
@@ -1572,11 +1641,21 @@ function WrongNote() {
     el("div", { class: "top" },
       el("button", { class: "back", "aria-label": "처음 화면으로", onclick: Home }, "←"),
       el("h1", { style: "margin:0" }, "오답 노트")),
-    el("p", { class: "sub" }, "틀린 단어를 모아 뒀어요. 다시 맞히면 여기서 빠져요."),
-    canPractice ? el("button", { class: "btn", style: "margin-bottom:14px", onclick: startPractice }, `오답만 다시 풀기 · ${Math.min(10, canPractice)}문제`) : null,
-    list.length ? list.map(NoteCard) : el("div", { class: "card" },
+    el("p", { class: "sub" }, `틀린 단어가 계속 쌓여요. ${NOTE_GOAL}개쯤 모이면 오답 퀴즈로 정리해요. 오답 퀴즈에서 맞히면 풀리고, 또 틀리면 2차 오답이 돼요.`),
+    canPractice ? el("button", { class: "btn", style: "margin-bottom:14px", onclick: () => startPractice() }, `오답 퀴즈 풀기 · ${Math.min(NOTE_GOAL, canPractice)}문제`) : null,
+    list.length ? noteSections(list) : el("div", { class: "card" },
       el("p", { class: "note", style: "margin:0;text-align:center;color:var(--muted)" }, "지금은 틀린 단어가 없어요. 👏"))
   );
+}
+// 차수별로 나눠 보여 준다: 2차 이상 오답(오답 퀴즈에서도 틀린 것) → 1차 오답
+function noteSections(list) {
+  const r = it => db.notes[it.id].r || 1;
+  const out = [];
+  [...new Set(list.map(r))].sort((a, b) => b - a).forEach(k => {
+    const part = list.filter(it => r(it) === k);
+    out.push(el("p", { class: "label nsec" }, `${k}차 오답 · ${part.length}개`), part.map(NoteCard));
+  });
+  return out;
 }
 // 단어 · 뜻, 그리고 '내 답 / 정답'. 문장으로 물어본 문제였으면 그 문장
 function NoteCard(it) {
@@ -1589,7 +1668,8 @@ function NoteCard(it) {
     el("div", { class: "nhead" },
       el("div", null, el("span", { class: "zh nzh" }, it.h), el("div", { class: "py" }, it.p)),
       sayWhat && canHear() ? el("button", { class: "play small", "aria-label": "발음 듣기", onclick: () => say(sayWhat) }, "🔊") : null),
-    el("div", null, it.m, p.wc >= 2 ? el("span", { class: "tag bad" }, `${p.wc}번 틀림`) : null),
+    el("div", null, it.m, p.wc >= 2 ? el("span", { class: "tag bad" }, `${p.wc}번 틀림`) : null,
+      n && n.d ? el("span", { class: "tag day" }, koDate(n.d).replace(/^\d+년 /, "").replace(/ \(.\)/, "")) : null),
     n ? el("div", { class: "nmiss" },
       el("p", { class: "q" }, KIND_LABEL[n.k] || ""),
       mine.length ? el("div", { class: "nrow mine" }, el("b", null, "내 답"), el("span", { class: zhCls(mine.join("")) }, mine.join(", "))) : null,
@@ -1601,8 +1681,8 @@ function NoteCard(it) {
     ) : null
   );
 }
-function startPractice() {
-  if (!newPractice()) return alert("다시 풀 오답이 없어요.");
+function startPractice(only) {
+  if (!newPractice(only)) return alert("다시 풀 오답이 없어요.");
   Quiz(practiceSes);
 }
 function PracticeDone(ses) {
@@ -1612,7 +1692,7 @@ function PracticeDone(ses) {
   const answered = cnt.ok + cnt.hint + cnt.miss;
   mount(
     el("div", { class: "rhead" },
-      el("h1", null, answered && cnt.ok === answered ? "전부 맞혔어요! 🎉" : "오답 다시 풀기 끝!"),
+      el("h1", null, answered && cnt.ok === answered ? "전부 맞혔어요! 🎉" : "오답 퀴즈 끝!"),
       el("p", { class: "sub" }, `${ses.qs.length}문제`),
       answered ? Stamp(cnt.ok, answered, today()) : null),
     el("div", { class: "card" },
@@ -1621,7 +1701,8 @@ function PracticeDone(ses) {
         el("div", null, el("b", { style: "color:var(--warn)" }, cnt.hint), el("span", null, "힌트 후")),
         el("div", null, el("b", { style: "color:var(--bad)" }, cnt.miss), el("span", null, "틀림"))
       ),
-      cnt.ok ? el("p", { class: "note mt" }, "바로 맞힌 단어는 오답 노트에서 뺐어요.") : null
+      cnt.ok || answered - cnt.ok ? el("p", { class: "note mt" },
+        [cnt.ok ? `바로 맞힌 ${cnt.ok}개는 오답 노트에서 풀렸어요.` : "", answered - cnt.ok ? ` 다시 틀린 ${answered - cnt.ok}개는 한 차수 올라가 노트에 남았어요.` : ""].join("").trim()) : null
     ),
     el("button", { class: "btn", onclick: () => WrongNote() }, "📒 오답 노트로"),
     el("button", { class: "btn ghost", onclick: Home }, "처음으로")
