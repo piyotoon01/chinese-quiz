@@ -1295,8 +1295,8 @@ function BackupNag() {
   if (ago != null && ago < 7) return null;
   return el("button", { class: "link", onclick: backup }, ago == null ? "🔒 기록을 아직 백업 안 했어요 · 지금 백업하기" : `🔒 마지막 백업 ${ago}일 전 · 지금 백업하기`);
 }
-// 만든 사람·출처 표시 (10/11 사용자: 이름은 '삐요'로). 일부 예문이 수업 교재에서 왔으니 그 사실도 함께 적는다
-const MAKER = "삐요", COPY_YEAR = 2026;
+// 만든 사람·출처 표시 (10/11 '삐요' → 10/17 사용자 새 중국어 페르소나 '小喜 샤오시', 이름 한자 喜에서). 일부 예문이 수업 교재에서 왔으니 그 사실도 함께 적는다
+const MAKER = "小喜 (샤오시)", COPY_YEAR = 2026;
 function About() {
   return el("div", { class: "card" },
     el("p", { class: "label" }, "이 퀴즈에 대해"),
