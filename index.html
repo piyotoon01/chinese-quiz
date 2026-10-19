@@ -173,6 +173,7 @@ button.mini:disabled .mi { filter: grayscale(1); opacity: .5; }
 .choice.right .n { border-color: var(--ok); color: var(--ok); }
 .choice.gone { opacity: .35; text-decoration: line-through; pointer-events: none; }
 .choice:disabled { cursor: default; }
+.prevq { margin-top: 4px; }
 input.answer {
   width: 100%; font-family: var(--zh); font-size: 1.6em; padding: 12px 14px; border-radius: 16px;
   border: 2px solid var(--line); background: var(--card); color: var(--ink); text-align: center;
@@ -1637,7 +1638,48 @@ function Quiz(s) {
     setTimeout(() => next.focus({ preventScroll: true }), 0);
   }
   function goNext() { ses.idx++; save(); Quiz(ses); }
-  mount(head, body);
+  // 10/19 사용자: 전 문제로 돌아가기 — 지난 문제를 다시 볼 수만 있다 (다시 풀면 기록이 꼬이니 답은 못 바꾼다)
+  const prev = ses.idx > 0 ? el("button", { class: "link prevq", onclick: () => PastQ(ses, ses.idx - 1) }, "‹ 전 문제 다시 보기") : null;
+  mount(head, body, prev);
+}
+
+// 지난 문제 보기: 문제·내가 고른 답·정답·해설. '지금 문제로'를 누르면 풀던 자리로 돌아간다
+function PastQ(ses, i) {
+  const q = ses.qs[i], r = ses.res[i], it = byId.get(q.itemId);
+  const mine = ((ses.wrong || [])[i] || []).map(String);
+  const back = () => Quiz(ses);
+  const tag = { ok: ["ok", "바로 맞힘"], hint: ["hint", "힌트 받고 맞힘"], miss: ["bad", "틀림"], skip: ["", "넘어감"] }[r] || ["", "안 풂"];
+  const card = el("div", { class: "card qcard" },
+    el("p", { class: "qlabel" }, `지난 문제 · ${i + 1}번`, tag[1] ? " · " + tag[1] : ""),
+    el("p", { class: "prompt" }, q.prompt));
+  if (q.showH) card.append(el("div", { class: "big-zh" }, q.showH));
+  if (q.sentence) card.append(el("div", { class: "sentence" }, q.sentence));
+  if (q.showP) card.append(el("div", { class: "big-py" }, q.showP));
+  if (q.listen && canHear()) card.append(el("button", { class: "speak", onclick: () => say(q.listen) }, "🔊 문제 다시 듣기"));
+  const zhc = /hanzi_mc|fill_mc|situation|listen_word/.test(q.kind);
+  if (q.choices) card.append(el("div", { class: "choices" }, q.choices.map((c, k) =>
+    el("button", { class: "choice" + (zhc ? " zhc" : "") + (k === q.answer ? " right" : mine.includes(c) ? " picked" : ""), disabled: true },
+      el("span", { class: "n" }, k === q.answer ? "✓" : mine.includes(c) ? "✗" : k + 1), el("span", null, c)))));
+  else if (mine.length) card.append(el("p", { class: "note" }, el("b", null, "내 답 "), el("span", { class: "zh" }, mine.join(", "))));
+  const full = q.full || (it ? fullOf(it) : null);
+  if (full) {
+    const ruby = alignPy(full.h, full.p);
+    card.append(el("div", { class: "full" },
+      ruby ? el("div", { class: "zh rb" }, ruby.map(([c, py]) => (py === null ? c : el("ruby", null, c, el("rt", null, py))))) : el("div", { class: "zh" }, full.h),
+      ruby ? null : el("div", { class: "py" }, full.p),
+      el("div", null, full.m),
+      canHear() ? el("button", { class: "speak", onclick: () => say(full.h) }, "🔊 발음 듣기") : null));
+  }
+  if (q.explain) card.append(el("p", { class: "note" }, q.explain));
+  mount(
+    el("div", { class: "top" },
+      el("button", { class: "back", "aria-label": "지금 문제로", onclick: back }, "←"),
+      el("h1", { style: "margin:0;font-size:1.2em" }, "지난 문제")),
+    card,
+    el("div", { class: "row" },
+      i > 0 ? el("button", { class: "btn ghost", onclick: () => PastQ(ses, i - 1) }, "‹ 그 전 문제") : null,
+      el("button", { class: "btn", onclick: back }, "지금 문제로 →"))
+  );
 }
 
 function applyResults(ses) {
