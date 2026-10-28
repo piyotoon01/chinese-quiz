@@ -228,6 +228,10 @@ input.answer:focus { outline: none; border-color: var(--accent); }
 .rb rt { font-family: "Noto Sans KR", sans-serif; font-size: .5em; font-weight: 500; color: var(--muted); letter-spacing: 0; }
 .more { color: inherit; opacity: .8; font-size: .88em; font-weight: 800; padding: 6px 0 2px; }
 .extra { padding-top: 2px; }
+.report { text-align: center; }
+.report textarea { width: 100%; box-sizing: border-box; margin-top: 8px; padding: 10px 12px; border: 2px solid var(--line); border-radius: 12px; font: inherit; font-size: .95em; resize: vertical; background: var(--card, #fff); color: var(--ink); }
+.report .row { margin-top: 6px; }
+.sheet .report .btn.ghost { background: var(--card); color: var(--ink); box-shadow: 0 4px 0 var(--line); }
 .full { background: var(--chip); border-radius: 14px; padding: 12px 14px; margin: 10px 0; }
 .full .zh { font-size: 1.45em; font-weight: 700; line-height: 1.4; }
 .full .py { color: var(--muted); }
@@ -1487,6 +1491,49 @@ function KeyboardAsk() {
 }
 
 // s: 풀 세트 (없으면 오늘의 복습). 버튼 onclick 으로 불리면 이벤트가 들어오므로 세트인지 확인한다
+// 10/28 사용자: 오류를 캡처해 보내지 않게 → '이 문제 이상해요'로 구글 폼(중국어 퀴즈 문제 신고)에 보낸다
+// 문제 정보 칸은 퀴즈가 채우고, 메모만 사람이 쓴다. 응답은 폼에 연결된 구글 시트에 쌓인다
+const REPORT_URL = "https://docs.google.com/forms/d/e/1FAIpQLSfWymUIfJgBiO54lRuPUgywRPuNWN9AR94q-lOU40KS45b9JA/formResponse";
+const REPORT_INFO = "entry.1017901416", REPORT_MEMO = "entry.1451729430";
+function reportInfo(ses, q, it, full, result) {
+  const mineAns = (ses.wrong || [])[ses.idx] || [];
+  const answer = q.choices ? q.choices[q.answer] : q.answers ? q.answers[0].join(" ") : (q.accept || [])[0] || full.h;
+  return [
+    `번호: ${q.id || `${q.kind}:${q.itemId || q.item || ""}`}${it ? ` (${it.h})` : ""}`,
+    `유형: ${KIND_LABEL[q.kind] || q.kind}`,
+    `지시문: ${q.prompt}`,
+    q.showH || q.sentence || q.showP || q.listen ? `문제: ${[q.showH, q.sentence, q.showP, q.listen && `듣기 ${q.listen}`].filter(Boolean).join(" / ")}` : null,
+    q.choices ? `보기: ${q.choices.map((c, i) => (i === q.answer ? `[${c}]` : c)).join(" · ")}` : null,
+    q.tiles ? `카드: ${q.tiles.join(" ")}` : null,
+    `정답: ${answer}`,
+    `정답 문장: ${full.h} ${full.p || ""} — ${full.m || ""}`,
+    `결과: ${{ ok: "맞힘", hint: "힌트 받고 맞힘", miss: "틀림" }[result] || result}${mineAns.length ? ` / 내 답: ${mineAns.join(" | ")}` : ""}`,
+    `날짜: ${new Date().toLocaleString("ko-KR")}`,
+  ].filter(Boolean).join("\n");
+}
+function reportBox(ses, q, it, full, result, refit) {
+  const box = el("div", { class: "report" });
+  const open = el("button", { class: "more", onclick: () => {
+    const memo = el("textarea", { rows: 3, placeholder: "뭐가 이상한지 적어 주세요 (비워 둬도 돼요)" });
+    const msg = el("p", { class: "note" });
+    const send = el("button", { class: "btn ghost", onclick: () => {
+      if (!navigator.onLine) { msg.textContent = "인터넷이 끊겨 있어요. 연결된 뒤 다시 눌러 주세요."; return; }
+      send.disabled = true; msg.textContent = "보내는 중…";
+      const body = new URLSearchParams({ [REPORT_INFO]: reportInfo(ses, q, it, full, result), [REPORT_MEMO]: memo.value.trim() });
+      // 구글 폼은 다른 사이트에 결과를 돌려주지 않는다(no-cors) — 요청이 나가면 보낸 것으로 본다
+      fetch(REPORT_URL, { method: "POST", mode: "no-cors", body })
+        .then(() => fill(box, el("p", { class: "note" }, "보냈어요. 고마워요! 확인하고 고칠게요.")))
+        .catch(() => { send.disabled = false; msg.textContent = "못 보냈어요. 잠시 뒤 다시 눌러 주세요."; })
+        .finally(refit);
+    } }, "보내기");
+    fill(box, memo, el("div", { class: "row" }, el("button", { class: "btn ghost", onclick: () => { fill(box, open); refit(); } }, "취소"), send), msg);
+    refit();
+    memo.focus();
+  } }, "🚩 이 문제 이상해요");
+  box.append(open);
+  return box;
+}
+
 function Quiz(s) {
   const ses = s && s.qs ? s : db.session;
   if (!ses) return Home();
@@ -1679,6 +1726,7 @@ function Quiz(s) {
       extraBox.hidden = !S.more; more.textContent = moreLabel(); more.setAttribute("aria-expanded", String(S.more));
       fit();
     } }, moreLabel()) : null;
+    const report = reportBox(ses, q, it, full, result, () => fit());
     const rubyPy = alignPy(full.h, full.p);
     const sheet = el("div", { class: "sheet " + cls, role: "status" }, el("div", { class: "sheet-in" },
       el("h3", null, title),
@@ -1690,7 +1738,7 @@ function Quiz(s) {
         el("div", null, full.m),
         canHear() ? el("button", { class: "speak", onclick: () => say(full.h) }, "🔊 발음 듣기") : null
       ),
-      more, extraBox, next
+      more, extraBox, next, report
     ));
     fill(fb); // 힌트 상자는 치운다
     app.append(sheet);
