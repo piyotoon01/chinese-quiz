@@ -320,9 +320,9 @@ input.answer:focus { outline: none; border-color: var(--accent); }
 </head>
 <body>
 <div class="wrap" id="app"></div>
-<script src="data/items.js?v=202610280032"></script>
-<script src="data/questions.js?v=202610280032"></script>
-<script src="data/near.js?v=202610280032"></script>
+<script src="data/items.js?v=202610280045"></script>
+<script src="data/questions.js?v=202610280045"></script>
+<script src="data/near.js?v=202610280045"></script>
 <script>
 "use strict";
 (() => {
@@ -471,12 +471,12 @@ function toneVariants(py, keep) {
 const KIND_LABEL = {
   meaning_mc: "뜻 맞히기", hanzi_mc: "간체자 고르기", hanzi_input: "간체자 쓰기", tone_mc: "성조 고르기",
   fill_mc: "빈칸 채우기", fill_input: "빈칸 채우기", order: "어순 배열", translate: "중국어로 옮기기",
-  situation: "상황 표현", speak: "말하기 연습", sentence_mc: "예문 뜻 고르기",
+  situation: "상황 표현", speak: "말하기 연습", sentence_mc: "예문 뜻 고르기", cloze_mc: "예문 빈칸 채우기",
   listen_word: "듣고 고르기", listen_sent: "듣고 뜻 고르기"
 };
 // 같은 유형 몇 문제까지 제한할 때 묶어서 세는 이름
 const TYPE_OF = k => (k === "fill_mc" || k === "fill_input" ? "fill" : k.startsWith("listen") ? "listen" : k);
-const IS_MC = k => ["meaning_mc", "hanzi_mc", "tone_mc", "fill_mc", "situation", "sentence_mc", "listen_word", "listen_sent"].includes(k);
+const IS_MC = k => ["meaning_mc", "hanzi_mc", "tone_mc", "fill_mc", "cloze_mc", "situation", "sentence_mc", "listen_word", "listen_sent"].includes(k);
 const IS_TILE = k => k === "order" || k === "translate" || k === "speak"; // 카드를 눌러 문장을 만드는 문제
 
 function simpleWord(it) {
@@ -651,6 +651,57 @@ function exQuestions(it, newExpr) {
   })())));
   return qs;
 }
+// 10/29 사용자: 항목마다 예문이 하나라 같은 문장만 되풀이된다 → 그 단어가 들어 있는 '다른 항목의 예문'에서 단어 자리를 비운다
+// 단어가 더 긴 낱말의 일부인 자리(今天의 天, 小心의 小)나 두 번 나오는 예문은 쓰지 않는다
+// 뜻이 여럿인 글자는 다른 예문에서 다른 뜻으로 쓰이기 쉽다 (花 꽃 ↔ 花了 쓰다, 点 시 ↔ 点菜 주문하다, 还 그래도 ↔ 还没 아직)
+// 来(주세요)·那(그럼)·是(是…的)·没(忙没忙)도 예문에서 항목과 다른 쓰임이 나와 뺀다 (10/29 검토)
+const CLOZE_SKIP = new Set(["花", "点", "还", "过", "还有", "月", "上", "下", "问", "要", "会", "想", "在", "一", "两", "好吗", "来", "那", "是", "没"]);
+const LONG_WORDS = [...new Set(ITEMS.map(o => ZH_ONLY(o.h)).filter(h => PURE_ZH.test(h) && h.length >= 2)
+  .concat(["问题", "上面", "下面", "里面", "外面", "前面", "后面", "一下", "一点儿", "多少", "怎么样", "什么"]))];
+const CLOZE = new Map();
+function clozeSpots(it) {
+  const w = ZH_ONLY(it.h);
+  if (CLOZE_SKIP.has(w)) return [];
+  if (CLOZE.has(w)) return CLOZE.get(w);
+  // 다른 낱말이 빈칸 경계에 걸치면(看看电影의 看电影, 不太好看의 不太好, 去不去의 去) 빈칸이 낱말을 자른다
+  // 这＿又便宜…처럼 뒤에 명사 없이 양사만 비우면 个도 맞는 답이 된다
+  const inside = (s, i) => (s[i - 1] === "不" && s[i - 2] === w[0])
+    || (w.length === 1 && /[这那]/.test(s[i - 1] || "") && /[又很是也都]/.test(s[i + 1] || "")) || LONG_WORDS.some(L => {
+    if (L === w) return false;
+    for (let j = s.indexOf(L); j >= 0; j = s.indexOf(L, j + 1)) {
+      const overlap = j < i + w.length && i < j + L.length, within = j >= i && j + L.length <= i + w.length;
+      if (overlap && !within) return true;
+    }
+    return false;
+  });
+  const spots = EXS.filter(ex => {
+    if (ex.id === it.id || ex.phrase) return false;
+    const i = ex.h.indexOf(w);
+    // 빈칸을 뺀 나머지가 두 글자는 남아야 문장 속에서 고르는 문제가 된다 (＿？ 만 남는 예문은 뺀다)
+    return i >= 0 && ex.h.indexOf(w, i + 1) < 0 && !inside(ex.h, i) && hanOf(ex.h).length - hanOf(w).length >= 2;
+  });
+  CLOZE.set(w, spots);
+  return spots;
+}
+function clozeQuestions(it) {
+  if (!autoOk(it)) return [];
+  const spots = clozeSpots(it);
+  if (!spots.length) return [];
+  const ex = spots[rnd(spots.length)], w = ZH_ONLY(it.h);
+  const sent = ex.h.replace(w, "＿");
+  // 오답: 같은 글자 수의 다른 단어 (같은 묶음부터). 넣었을 때 다른 예문이 그대로 되는 단어는 뺀다
+  const known = new Set(EXS.map(o => canon(o.h)));
+  const others = pickOthers(it, 3, o => {
+    const h = ZH_ONLY(o.h);
+    return h.length === w.length && !known.has(canon(sent.replace("＿", h))) ? h : null;
+  }, [o => group(o) === group(it), o => o.t === it.t]);
+  if (others.length < 3) return [];
+  const m = dm(it);
+  return [Object.assign({ itemId: it.id, tag: topic(it.src), full: { h: ex.h, p: ex.p, m: ex.m },
+    kind: "cloze_mc", prompt: `'${ex.m}'${josa(ex.m, "이", "가")} 되도록 빈칸을 채우세요.`, sentence: sent,
+    hint: `빈칸에는 '${m}'${josa(m, "이라는", "라는")} 뜻의 말이 들어가요.`,
+    explain: `${it.h} (${it.p}) — ${it.m}` }, mcOf(w, others))];
+}
 // 병음을 음절로 나눈다: zhōngguó → zhōng·guó. 띄어쓰기·문장부호·' 로 먼저 끊고,
 // 모음 사이 자음 덩어리는 뒤 음절의 첫 자음(zh·ch·sh 또는 한 글자)만 떼고 나머지(n·ng·r)는 앞 음절 끝으로
 function pySyllables(py) {
@@ -797,7 +848,7 @@ function questionsFor(it) {
   const auth = authoredFor(it).filter(q => S.kbd || q.kind !== "fill_input");
   // 새 표현은 복습 2회까지 뜻 맞히기·예문 읽기·상황 고르기만
   if (isNewExpr(it)) return autoQuestions(it).concat(exQuestions(it, true), auth.filter(q => q.kind === "situation"));
-  return autoQuestions(it).concat(exQuestions(it, false), auth);
+  return autoQuestions(it).concat(exQuestions(it, false), clozeQuestions(it), auth);
 }
 
 // ---------- 출제 대상 고르기 ----------
@@ -824,13 +875,17 @@ function pickItems(n) {
   const ordered = head.concat(unseen.slice(ui), later);
   const isOld = it => it.d && daysBetween(it.d, t) >= 21;
   const isRecent = it => it.d && daysBetween(it.d, t) < 14;
+  // 10/29 사용자: 새로 배운 건 업데이트 다음 날 바로 한 세트로 풀어 보고 싶다
+  // → 최근 2주 안에 배웠는데 아직 안 푼 항목은 최신순으로 세트 맨 앞에 (주제당 4개·최근 것 제한을 받지 않는다)
+  const fresh = unseen.filter(isRecent).sort((a, b) => b.d.localeCompare(a.d)).slice(0, n);
   const isGram = it => it.t !== "단어";
   const isSitu = it => authoredFor(it).some(q => q.kind === "situation" || q.kind === "translate");
   const scale = n / 15;
   const need = { old: Math.round(8 * scale), recentMax: Math.max(2, Math.round(4 * scale)), topics: Math.round(6 * scale), gram: Math.round(4 * scale), word: Math.round(4 * scale), situ: Math.round(5 * scale) };
 
   function run(strict) {
-    const picked = [], topicN = {};
+    const picked = fresh.slice(), topicN = {};
+    picked.forEach(it => { topicN[group(it)] = (topicN[group(it)] || 0) + 1; });
     let old = 0, recent = 0, gram = 0, situ = 0;
     for (const it of ordered) {
       if (picked.length >= n) break;
@@ -864,7 +919,7 @@ function assignQuestions(items) {
   const targetBuild = Math.floor(n / 2), targetSitu = Math.round(n * 5 / 15);
   const typeCap = Math.max(2, Math.round(n * 4 / 15)); // 15문제 기준 한 유형 4문제까지
   const tileCap = 1; // 카드 문제는 말하기에 2개가 따로 있으니 복습에서는 1개까지
-  const NEW_KINDS = ["sentence_mc", "listen"]; // 새로 넣은 유형은 한 세트에 1~2개씩 섞이게
+  const NEW_KINDS = ["sentence_mc", "listen", "cloze_mc"]; // 새로 넣은 유형은 한 세트에 1~2개씩 섞이게
   // 손으로 쓴 문제가 있는 항목부터 정해야 상황형 몫이 단어 문제에 밀리지 않는다
   const order = items.map((it, i) => i).sort((a, b) => authoredFor(items[b]).length - authoredFor(items[a]).length);
   const out = [];
@@ -1477,7 +1532,7 @@ function Quiz(s) {
   // 답 입력 영역
   let submit, area, onDone = () => {};
   if (q.choices) {
-    const zhChoices = /hanzi_mc|fill_mc|situation|listen_word/.test(q.kind);
+    const zhChoices = /hanzi_mc|fill_mc|cloze_mc|situation|listen_word/.test(q.kind);
     const btns = q.choices.map((c, i) => el("button", { class: "choice" + (zhChoices ? " zhc" : ""), onclick: () => submit(i) },
       el("span", { class: "n" }, i + 1), el("span", null, c)));
     area = el("div", { class: "choices" }, btns);
@@ -1670,7 +1725,7 @@ function PastQ(ses, i) {
   if (q.sentence) card.append(el("div", { class: "sentence" }, q.sentence));
   if (q.showP) card.append(el("div", { class: "big-py" }, q.showP));
   if (q.listen && canHear()) card.append(el("button", { class: "speak", onclick: () => say(q.listen) }, "🔊 문제 다시 듣기"));
-  const zhc = /hanzi_mc|fill_mc|situation|listen_word/.test(q.kind);
+  const zhc = /hanzi_mc|fill_mc|cloze_mc|situation|listen_word/.test(q.kind);
   if (q.choices) card.append(el("div", { class: "choices" }, q.choices.map((c, k) =>
     el("button", { class: "choice" + (zhc ? " zhc" : "") + (k === q.answer ? " right" : mine.includes(c) ? " picked" : ""), disabled: true },
       el("span", { class: "n" }, k === q.answer ? "✓" : mine.includes(c) ? "✗" : k + 1), el("span", null, c)))));
