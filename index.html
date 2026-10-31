@@ -180,6 +180,12 @@ button.mini:disabled .mi { filter: grayscale(1); opacity: .5; }
 .match .choice.zhc { font-size: 1.3em; }
 .match .choice.on { border-color: var(--accent); background: var(--accent-soft); }
 .match .choice.right { opacity: .55; }
+.full.pairs { display: grid; gap: 4px; padding: 8px 12px; }
+.pair { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; padding: 4px 0; }
+.pair + .pair { border-top: 1px solid var(--line); }
+.pair .zh.rb { font-size: 1.25em; line-height: 2.1; }
+.pair .pm { font-size: .95em; }
+.pair .speak { margin-top: 0; padding: 4px 10px; }
 /* 틀린 곳 찾기: 글자 하나하나가 카드 */
 .errsent { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center; margin: 6px 0 18px; }
 .errsent .tile.errc { height: 52px; min-width: 46px; padding: 0 8px; font-size: 1.45em; }
@@ -730,9 +736,9 @@ function matchQuestions(it) {
   const picked = [it];
   for (const id of ids) { const o = byId.get(id); if (picked.length < 4 && picked.every(x => !clash(x, o) && dm(x) !== dm(o))) picked.push(o); }
   if (picked.length < 4) return [];
-  const pairs = picked.map(o => ({ h: o.h, m: dm(o) }));
+  const pairs = picked.map(o => ({ h: o.h, p: o.p, m: dm(o) }));
   return [{ itemId: it.id, tag: topic(it.src), full: fullOf(it), kind: "match", prompt: "같은 뜻끼리 짝지어 보세요.", pairs,
-    hint: "남은 것끼리 다시 짝지어 보세요.", explain: pairs.map(x => `${x.h} — ${x.m}`).join(" · ") }];
+    hint: "남은 것끼리 다시 짝지어 보세요." }];
 }
 // 틀린 곳 찾기: 손문제(상황·빈칸 고르기)의 오답 보기를 '한 군데 틀린 문장'으로 보여 주고 틀린 글자를 누르게 한다
 // 정답과 한 군데(1~3글자)만 다른 오답만 쓴다 — 어순만 바뀐 것·글자가 빠지기만 한 것은 누를 곳이 없어 뺀다
@@ -1619,6 +1625,17 @@ function reportBox(ses, q, it, full, result, refit) {
   return box;
 }
 
+// 10/31 사용자: 짝 맞추기 정답 화면에 하나만 나온다 → 네 짝을 병음·뜻·발음 버튼과 함께 한 줄씩
+function pairsBox(q) {
+  return el("div", { class: "full pairs" }, q.pairs.map(x => {
+    const p = x.p || (byH.get(x.h) || {}).p || "", ruby = alignPy(x.h, p);
+    return el("div", { class: "pair" },
+      ruby ? el("span", { class: "zh rb" }, ruby.map(([c, r]) => (r === null ? c : el("ruby", null, c, el("rt", null, r))))) : el("span", { class: "zh" }, x.h),
+      el("span", { class: "pm" }, x.m),
+      canHear() ? el("button", { class: "speak", "aria-label": `${x.h} 발음 듣기`, onclick: () => say(x.h) }, "🔊") : null);
+  }));
+}
+
 function Quiz(s) {
   const ses = s && s.qs ? s : db.session;
   if (!ses) return Home();
@@ -1839,8 +1856,8 @@ function Quiz(s) {
       all.filter((x, i) => i !== main).forEach(x =>
         extra.push(el("p", { class: "note" }, el("b", null, "이렇게도 맞아요 "), el("span", { class: "zh" }, x.h), ` ${x.p}`)));
     }
-    if (q.explain) extra.push(el("p", { class: "note" }, q.explain));
-    if (it && !q.explain) {
+    if (q.explain && !q.pairs) extra.push(el("p", { class: "note" }, q.explain));
+    if (it && !q.explain && !q.pairs) { // 짝 맞추기는 네 짝이 다 보이니 한 단어의 성조·예문은 덧붙이지 않는다
       const tp = tonePattern(it.p);
       if (tp) extra.push(el("p", { class: "note" }, el("b", null, "성조 "), tp));
       if (it.pron && it.pron.length) extra.push(el("p", { class: "note" }, el("b", null, "발음 주의 "), it.pron.join(" · ")));
@@ -1863,7 +1880,7 @@ function Quiz(s) {
       typedAlt ? el("p", { class: "note" }, el("b", null, "이렇게 써도 정답 "),
         el("span", { class: "zh" }, typedAlt), byH.get(typedAlt) ? ` ${byH.get(typedAlt).p}` : "",
         " — ", el("span", { class: "zh" }, `${q.accept[0]} = ${typedAlt}`), ", 뜻이 같아요.") : null,
-      el("div", { class: "full" },
+      q.pairs ? pairsBox(q) : el("div", { class: "full" },
         // 병음은 글자마다 위에 단다 (글자와 음절 수가 안 맞는 항목 이름 등은 예전처럼 아래 한 줄로)
         rubyPy ? el("div", { class: "zh rb" }, rubyPy.map(([c, r]) => (r === null ? c : el("ruby", null, c, el("rt", null, r))))) : el("div", { class: "zh" }, full.h),
         rubyPy ? null : el("div", { class: "py" }, full.p),
@@ -1913,13 +1930,13 @@ function PastQ(ses, i) {
   const full = q.full || (it ? fullOf(it) : null);
   if (full) {
     const ruby = alignPy(full.h, full.p);
-    card.append(el("div", { class: "full" },
+    card.append(q.pairs ? pairsBox(q) : el("div", { class: "full" },
       ruby ? el("div", { class: "zh rb" }, ruby.map(([c, py]) => (py === null ? c : el("ruby", null, c, el("rt", null, py))))) : el("div", { class: "zh" }, full.h),
       ruby ? null : el("div", { class: "py" }, full.p),
       el("div", null, full.m),
       canHear() ? el("button", { class: "speak", onclick: () => say(full.h) }, "🔊 발음 듣기") : null));
   }
-  if (q.explain) card.append(el("p", { class: "note" }, q.explain));
+  if (q.explain && !q.pairs) card.append(el("p", { class: "note" }, q.explain));
   mount(
     el("div", { class: "top" },
       el("button", { class: "back", "aria-label": "지금 문제로", onclick: back }, "←"),
