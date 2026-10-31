@@ -324,9 +324,9 @@ input.answer:focus { outline: none; border-color: var(--accent); }
 </head>
 <body>
 <div class="wrap" id="app"></div>
-<script src="data/items.js?v=202610310955"></script>
-<script src="data/questions.js?v=202610310955"></script>
-<script src="data/near.js?v=202610310955"></script>
+<script src="data/items.js?v=202610311023"></script>
+<script src="data/questions.js?v=202610311023"></script>
+<script src="data/near.js?v=202610311023"></script>
 <script>
 "use strict";
 (() => {
@@ -917,6 +917,20 @@ function pickItems(n) {
   return picked;
 }
 
+// 10/31 사용자: 같은 문장이 너무 자주 나와 재미가 없다 (30일 시뮬레이션: 34%가 7일 안에 다시 나온 문장)
+// → 문제에 보이는 문장을 기기에 '마지막으로 본 날'로 남겨 두고, 최근에 본 문장은 뒤로·오래 안 본 문장은 앞으로
+// 한 문장이 여러 단어의 문제(你花了多少钱 → 花·多少·钱)로 돌아오는 것도 같이 막힌다
+function sentKey(q) {
+  const k = q.sentence || (q.showH && ZH_ONLY(q.showH).length > 3 ? q.showH : "") || (q.full && q.full.h) || "";
+  return ZH_ONLY(k.replace(/[＿_]/g, ""));
+}
+function staleness(q) {
+  const last = (db.shown || {})[sentKey(q)];
+  if (!last) return 1.2;                // 이 기기에서 처음 보는 문장
+  const days = daysBetween(last, today());
+  return days < 3 ? -4 : days < 7 ? -2.5 : days < 14 ? -1 : Math.min(1, (days - 14) / 30);
+}
+
 function assignQuestions(items) {
   const n = items.length, typeN = {};
   let build = 0, mc = 0, situ = 0, tiles = 0;
@@ -935,7 +949,7 @@ function assignQuestions(items) {
     if (!qs.length) qs = all;
     if (!qs.length) continue; // 지금 설정으로 낼 수 있는 문제가 없는 항목은 건너뛴다
     const score = q => {
-      let s = Math.random();
+      let s = Math.random() + staleness(q);
       if (q.kind === "situation" || q.kind === "translate") s += situ < targetSitu ? 2 : -.5;
       if (q.id) s += .6; // 손으로 쓴 문제를 조금 더 우선
       if (NEW_KINDS.includes(TYPE_OF(q.kind))) s += (typeN[TYPE_OF(q.kind)] || 0) < 2 ? 1.2 : -.5;
@@ -958,7 +972,8 @@ function pickSpeak(n, reviewItems, reviewQs) {
   const usedIds = new Set(reviewQs.map(q => q.id).filter(Boolean));
   // 복습에 이미 나온 항목, 아직 복습 날이 안 된 항목(오늘 푼 것 등)은 뒤로 — 같은 날 세트를 또 풀어도 말하기가 되풀이되지 않게
   const notYet = q => { const it = byH.get(q.item); return isSeen(it.id) && !isDue(it.id); };
-  const rank = list => shuffle(list).sort((a, b) => (used.has(a.item) - used.has(b.item)) || (notYet(a) - notYet(b)) || (priority(byH.get(a.item)) - priority(byH.get(b.item))));
+  const recent = q => staleness(q) < -2; // 최근 일주일 안에 본 문장은 말하기에서도 뒤로
+  const rank = list => shuffle(list).sort((a, b) => (used.has(a.item) - used.has(b.item)) || (recent(a) - recent(b)) || (notYet(a) - notYet(b)) || (priority(byH.get(a.item)) - priority(byH.get(b.item))));
   const nTile = Math.max(1, n - 1), tags = new Set(), tilesOut = [], sitOut = []; // 3문제면 카드 2 + 고르기 1
   const usedItems = new Set(); // 한 항목에 말하기 문제가 여럿(태그만 다름)이어도 한 세트에는 하나만
   for (const q of rank(AUTHORED.filter(q => q.kind === "speak" && byH.has(q.item)))) {
@@ -1811,6 +1826,7 @@ function applyResults(ses) {
   const base = ses.date, seen = {}, missAt = {}; // 시작한 날 기준 (자정을 넘겨 끝내도 간격이 하루 밀리지 않게)
   ses.qs.forEach((q, i) => {
     const r = ses.res[i]; if (!r || r === "skip" || !q.itemId) return; // 소리가 안 나서 넘긴 문제는 기록하지 않는다
+    const sk = sentKey(q); if (sk) (db.shown = db.shown || {})[sk] = base; // 이 문장을 마지막으로 본 날
     // 한 항목이 여러 번 나왔으면 하나라도 틀렸을 때 틀린 것으로 본다
     seen[q.itemId] = seen[q.itemId] === "bad" || r !== "ok" ? "bad" : "ok";
     if (r !== "ok") missAt[q.itemId] = i;
