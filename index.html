@@ -834,13 +834,20 @@ function listenWord(it) {
   if (!listenable(it)) return [];
   const me = sound(it.p);
   const myPlain = plain(it.p).replace(/\s/g, ""), mySy = new Set(sylls(it.p)), len = ZH_ONLY(it.h).length;
-  const ranked = shuffle(ITEMS.filter(o => o.id !== it.id && listenable(o) && !clash(it, o)
+  const pool = ITEMS.filter(o => o.id !== it.id && listenable(o) && !clash(it, o)
       // 발음이 같은 단어(他/她/它, 旁边/旁边儿)는 들어서 구분할 수 없으니 뺀다
-      && sound(o.p) !== me))
+      && sound(o.p) !== me);
+  // 11/4 사용자: 정답이 한 글자인데 보기가 두세 글자면 소리 길이만 듣고 바로 고른다 → 글자 수가 같은 단어만 보기로 (모자라면 예전처럼)
+  const same = pool.filter(o => ZH_ONLY(o.h).length === len);
+  const initOf = p => (plain(p).replace(/\s/g, "").match(/^(zh|ch|sh|[a-z])/) || [""])[0];
+  const finalOf = p => plain(p).replace(/\s/g, "").slice(-2);
+  const ranked = shuffle(same.length >= 12 ? same : pool)
     .map(o => {
       let s = Math.random();
       if (plain(o.p).replace(/\s/g, "") === myPlain) s += 4;      // 성조만 다른 단어 (妈/麻/马)
       if (sylls(o.p).some(x => mySy.has(x))) s += 2;              // 같은 음절이 들어간 단어
+      if (initOf(o.p) === initOf(it.p)) s += 1.5;                 // 첫소리가 같은 단어 (소리가 비슷해야 어렵다)
+      if (finalOf(o.p) === finalOf(it.p)) s += 1;                 // 끝소리가 같은 단어
       if (ZH_ONLY(o.h).length === len) s += 1;
       return { o, s };
     }).sort((a, b) => b.s - a.s);
