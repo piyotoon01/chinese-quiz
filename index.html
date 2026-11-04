@@ -1762,7 +1762,7 @@ function Quiz(s) {
       } else { btns[q.answer].classList.add("right"); finish("miss", why); }
     };
   } else if (q.accept) {
-    const inp = el("input", { class: "answer", type: "text", autocomplete: "off", autocapitalize: "off", spellcheck: "false", lang: "zh-CN", placeholder: "간체자로 입력" });
+    const inp = el("input", { class: "answer", type: "text", autocomplete: "off", autocapitalize: "off", spellcheck: "false", lang: "zh-CN", placeholder: "간체자로 입력 (병음은 이어서 쳐 보세요)" });
     const go = el("button", { class: "btn mt", onclick: () => submit() }, "확인");
     inp.addEventListener("keydown", e => {
       if (e.key !== "Enter" || e.isComposing || e.keyCode === 229) return; // 중국어 입력기의 후보 확정 엔터는 무시
@@ -1774,7 +1774,7 @@ function Quiz(s) {
       if (done) return;
       mine("모르겠어요");
       go.remove(); giveUp.remove(); inp.disabled = true; finish("miss");
-    } }, "모르겠어요 — 정답 보기");
+    } }, "모르겠어요 — 정답 보기 (틀린 것으로 기록돼요)");
     const warn = el("p", { class: "note", style: "color:var(--bad);text-align:center;min-height:1.6em;margin:6px 0 0" });
     area = el("div", null, inp, warn, go, el("div", { style: "text-align:center" }, giveUp));
     submit = () => {
