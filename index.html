@@ -343,9 +343,9 @@ input.answer:focus { outline: none; border-color: var(--accent); }
 </head>
 <body>
 <div class="wrap" id="app"></div>
-<script src="data/items.js?v=202611040450"></script>
-<script src="data/questions.js?v=202611040450"></script>
-<script src="data/near.js?v=202611040450"></script>
+<script src="data/items.js?v=202611040454"></script>
+<script src="data/questions.js?v=202611040454"></script>
+<script src="data/near.js?v=202611040454"></script>
 <script>
 "use strict";
 (() => {
@@ -757,7 +757,7 @@ function errSpot(wrong, right) {
   return [...spot].sort((x, y) => x - y);
 }
 // 틀린 곳 찾기에서 뺄 후보(손문제 id|틀린 문장)와 뜻만 보고도 이해되게 고친 이유 — 10/31 검토 에이전트
-const FE_SKIP = new Set(["g-sit-la-bu-la|牛肉面辣不辣吗？","e-sit-zouba|慢走。","e-sit-zouba|请进。","q-sit-manzou|等一下！","q-sit-manzou|请进！","d-sit-manzou-reply|慢走！","d-sit-manzou-reply|请进！","d-sit-manzou-reply|不客气！","d-sit-150|一百五块。","i3-mc-yibaiba-bag|这个书包一百八块。","d-sit-110|一百一块。","d-liangkuai-liangmao-er|这支铅笔二块二毛二。","q-buyong|你不要等我。","d-sit-qingjin|再见！","d-sit-qingjin|慢走！","i3-sit-qingwen-subway|请问，这儿离地铁站远不远吗？","c-sit-meiqu|我不去过。","c-sit-ranhoune|为什么？","b-dengyixia-sit|再见！","b-dengyixia-sit|慢走！","b-haoma-mc|我们下午去公园，好不好吗？","b-haibucuo-sit|没意思。","i1-sit-haobuhao|我们点烤鸭，好不好吗？","b-haikeyi-sit|非常好。","b-haikeyi-sit|不太好。","b-bucuo-sit|没关系！","b-bucuo-sit|没问题！","b-zhende-sit|不错。","b-meiwenti-sit|不客气！","b-guolai-sit|我过去！","b-guolai-sit|慢走！","i2-sit-hui-riyu|你会不会说日语吗？","a-sit-meiguanxi|对不起！","a-sit-meiguanxi|不客气！","a-mc-yiqianlingwushi|这个书包一千五。","i1-mc-1050|我的手机一千五块。","a-sit-nihao|再见！","a-sit-yibaiwushi|一百零五。","a-sit-duibuqi|谢谢！","a-sit-duibuqi|不客气！","a-sit-duibuqi|没关系！"]);
+const FE_SKIP = new Set(["j-sit-haishi-tea|你喝咖啡和茶？","g-sit-la-bu-la|牛肉面辣不辣吗？","e-sit-zouba|慢走。","e-sit-zouba|请进。","q-sit-manzou|等一下！","q-sit-manzou|请进！","d-sit-manzou-reply|慢走！","d-sit-manzou-reply|请进！","d-sit-manzou-reply|不客气！","d-sit-150|一百五块。","i3-mc-yibaiba-bag|这个书包一百八块。","d-sit-110|一百一块。","d-liangkuai-liangmao-er|这支铅笔二块二毛二。","q-buyong|你不要等我。","d-sit-qingjin|再见！","d-sit-qingjin|慢走！","i3-sit-qingwen-subway|请问，这儿离地铁站远不远吗？","c-sit-meiqu|我不去过。","c-sit-ranhoune|为什么？","b-dengyixia-sit|再见！","b-dengyixia-sit|慢走！","b-haoma-mc|我们下午去公园，好不好吗？","b-haibucuo-sit|没意思。","i1-sit-haobuhao|我们点烤鸭，好不好吗？","b-haikeyi-sit|非常好。","b-haikeyi-sit|不太好。","b-bucuo-sit|没关系！","b-bucuo-sit|没问题！","b-zhende-sit|不错。","b-meiwenti-sit|不客气！","b-guolai-sit|我过去！","b-guolai-sit|慢走！","i2-sit-hui-riyu|你会不会说日语吗？","a-sit-meiguanxi|对不起！","a-sit-meiguanxi|不客气！","a-mc-yiqianlingwushi|这个书包一千五。","i1-mc-1050|我的手机一千五块。","a-sit-nihao|再见！","a-sit-yibaiwushi|一百零五。","a-sit-duibuqi|谢谢！","a-sit-duibuqi|不客气！","a-sit-duibuqi|没关系！"]);
 const FE_WHY = {"去，吃吧！":"去는 '가다'라 '자, 먹어' 하고 권하는 말이 되지 않아요. 권할 때는 来예요.","不用，我们吃饱吧。":"吃饱는 '배불리 먹다'라 '더치페이하자'가 되지 않아요.","家里是肉。":"是는 '~이다'라 '집은 고기다'가 돼요. '~에 ~이 있다'는 有예요.","我在下班的路上。":"下班은 '퇴근'이라 '출근하는 길'이 되지 않아요. 출근은 上班이에요.","这个星期五我看电影了。":"这个星期는 '이번 주'라 '지난주'가 아니에요. 지난주는 上个星期예요.","我在吃早饭呢。":"早饭은 '아침밥'이에요. '저녁'은 晚饭이에요.","快过去吃饭！":"过去는 말하는 사람에게서 멀어지는 '저쪽으로 가다'예요. '이리 와'는 过来예요.","我现在过来。":"过来는 말하는 사람 쪽으로 '오다'예요. 내가 그쪽으로 갈 때는 过去예요.","您是谁？":"您是谁？는 '누구세요?'라 성을 묻는 말이 아니에요. 성은 贵姓으로 여쭤요.","对不起，我们是好朋友。":"对不起는 '미안해'라 '천만에'가 아니에요. '천만에'는 不客气예요.","这儿很暖和，我们在这儿休息吧。":"暖和는 '따뜻하다'예요. '시원하다'는 凉快예요."};
 function errorQuestions(it) {
   const out = [];
