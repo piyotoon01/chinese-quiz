@@ -510,6 +510,7 @@ function isNewExpr(it) { return /새 표현/.test(it.src) && prog(it.id).rc <= 2
 // 자동 문제에서 뺄 항목
 const AUTO_SKIP = new Set(["连动文", "麻"]);                       // 문법 용어, 성조 연습용 글자
 const WORD_SKIP = new Set(["的", "吧", "呢", "吗", "和"]);         // 뜻·간체자 맞히기에 맞지 않는 조사 — 예문 문제로만 낸다
+const INPUT_SKIP = new Set(["俄罗斯"]);                            // 간체자 쓰기만 뺀다 (11/4 사용자: 외래어 이름은 키보드에서 음절마다 골라 헷갈림) — 다른 유형은 그대로
 const LISTEN_SKIP = new Set(["只", "支", "还", "几"]);             // 한 글자만 읽히면 음성이 다른 소리로 읽기도 한다 (只 zhī, 还 huán, 几 jī)
 // 이 기기에서 '소리가 이상해요'를 누른 말 — 다음부터 듣기 문제로 내지 않는다 (설정 화면에 목록이 남는다)
 const oddSound = t => (S.odd || []).includes(ZH_ONLY(String(t)));
@@ -869,7 +870,7 @@ function autoQuestions(it) {
     kind: "hanzi_mc", prompt: `'${m}'${josa(m, "을", "를")} 중국어로 고르세요.`,
     hint: "보기 두 개를 지웠어요. 다시 골라 보세요."
   }, mcOf(it.h, pickOthers(it, 3, o => o.h, [o => group(o) === group(it) && ZH_ONLY(o.h).length === len, o => ZH_ONLY(o.h).length === len]))));
-  if (S.kbd) {
+  if (S.kbd && !INPUT_SKIP.has(ZH_ONLY(it.h))) {
     const exZh = (EXP.get(it.id) || {}).h || ""; // 형식이 맞는 예문의 중국어 부분만 (병음이 힌트에 새지 않게)
     const tp = tonePattern(it.p).split(" ")[0];
     const hint = exZh.includes(ZH_ONLY(it.h)) && exZh !== it.h
@@ -1762,7 +1763,7 @@ function Quiz(s) {
       } else { btns[q.answer].classList.add("right"); finish("miss", why); }
     };
   } else if (q.accept) {
-    const inp = el("input", { class: "answer", type: "text", autocomplete: "off", autocapitalize: "off", spellcheck: "false", lang: "zh-CN", placeholder: "간체자로 입력 (병음은 이어서 쳐 보세요)" });
+    const inp = el("input", { class: "answer", type: "text", autocomplete: "off", autocapitalize: "off", spellcheck: "false", lang: "zh-CN", placeholder: "간체자로 입력" });
     const go = el("button", { class: "btn mt", onclick: () => submit() }, "확인");
     inp.addEventListener("keydown", e => {
       if (e.key !== "Enter" || e.isComposing || e.keyCode === 229) return; // 중국어 입력기의 후보 확정 엔터는 무시
