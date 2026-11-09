@@ -1469,8 +1469,8 @@ window.DIALOGS = [
    },
    {
     "s": "A",
-    "h": "为什么不坐飞机？",
-    "p": "Wèishénme bú zuò fēijī?",
+    "h": "你为什么没坐飞机？",
+    "p": "Nǐ wèishénme méi zuò fēijī?",
     "m": "왜 비행기 안 탔어?"
    },
    {
