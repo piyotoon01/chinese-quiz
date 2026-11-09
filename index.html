@@ -343,9 +343,9 @@ input.answer:focus { outline: none; border-color: var(--accent); }
 </head>
 <body>
 <div class="wrap" id="app"></div>
-<script src="data/items.js?v=202611090738"></script>
-<script src="data/questions.js?v=202611090738"></script>
-<script src="data/near.js?v=202611090738"></script>
+<script src="data/items.js?v=202611090818"></script>
+<script src="data/questions.js?v=202611090818"></script>
+<script src="data/near.js?v=202611090818"></script>
 <script>
 "use strict";
 (() => {
@@ -1010,6 +1010,14 @@ function sentKey(q) {
   const k = q.sentence || (q.showH && ZH_ONLY(q.showH).length > 3 ? q.showH : "") || (q.full && q.full.h) || "";
   return ZH_ONLY(k.replace(/[＿_]/g, ""));
 }
+// 11/9 사용자: 한 세트 1번 문장이 다른 유형으로 4번에 또 나옴 → 세트 안에서는 같은 문장(한쪽이 다른 쪽을 품은 것 포함)을 한 번만
+function sameSent(a, b) {
+  if (!a || !b) return false;
+  if (a === b) return true;
+  const [s, l] = a.length <= b.length ? [a, b] : [b, a];
+  return s.length >= 4 && l.includes(s);
+}
+function seenInSet(keys, q) { const k = sentKey(q); return !!k && keys.some(x => sameSent(x, k)); }
 function staleness(q) {
   const last = (db.shown || {})[sentKey(q)];
   if (!last) return 1.2;                // 이 기기에서 처음 보는 문장
@@ -1026,10 +1034,12 @@ function assignQuestions(items) {
   const NEW_KINDS = ["sentence_mc", "listen", "cloze_mc", "match", "find_error"]; // 새로 넣은 유형은 한 세트에 1~2개씩 섞이게
   // 손으로 쓴 문제가 있는 항목부터 정해야 상황형 몫이 단어 문제에 밀리지 않는다
   const order = items.map((it, i) => i).sort((a, b) => authoredFor(items[b]).length - authoredFor(items[a]).length);
-  const out = [];
+  const out = [], setKeys = [];
   for (const i of order) {
     const it = items[i];
-    const all = questionsFor(it);
+    const all0 = questionsFor(it);
+    const fresh0 = all0.filter(q => !seenInSet(setKeys, q)); // 이 세트에서 이미 나온 문장은 다른 유형이어도 뺀다
+    const all = fresh0.length ? fresh0 : all0;
     let qs = all.filter(q => (typeN[TYPE_OF(q.kind)] || 0) < typeCap && !(IS_TILE(q.kind) && tiles >= tileCap));
     if (!qs.length) qs = all.filter(q => !IS_TILE(q.kind) || tiles < tileCap);
     if (!qs.length) qs = all;
@@ -1046,6 +1056,7 @@ function assignQuestions(items) {
     };
     const q = qs.slice().sort((a, b) => score(b) - score(a))[0];
     typeN[TYPE_OF(q.kind)] = (typeN[TYPE_OF(q.kind)] || 0) + 1;
+    if (sentKey(q)) setKeys.push(sentKey(q));
     if (IS_TILE(q.kind)) tiles++;
     if (IS_MC(q.kind)) mc++; else build++;
     if (q.kind === "situation" || q.kind === "translate") situ++;
@@ -1063,16 +1074,17 @@ function pickSpeak(n, reviewItems, reviewQs) {
   const recent = q => staleness(q) < -2; // 최근 일주일 안에 본 문장은 말하기에서도 뒤로
   const rank = list => shuffle(list).sort((a, b) => (used.has(a.item) - used.has(b.item)) || (recent(a) - recent(b)) || (notYet(a) - notYet(b)) || (priority(byH.get(a.item)) - priority(byH.get(b.item))));
   const nTile = Math.max(1, n - 1), tags = new Set(), tilesOut = [], sitOut = []; // 3문제면 카드 2 + 고르기 1
+  const keys = reviewQs.map(sentKey).filter(Boolean); // 복습에 나온 문장은 말하기에서도 다시 내지 않는다
   const usedItems = new Set(); // 한 항목에 말하기 문제가 여럿(태그만 다름)이어도 한 세트에는 하나만
   for (const q of rank(AUTHORED.filter(q => q.kind === "speak" && byH.has(q.item)))) {
     if (tilesOut.length >= nTile) break;
-    if (tags.has(q.tag) || usedItems.has(q.item)) continue;
-    tags.add(q.tag); usedItems.add(q.item); tilesOut.push(q);
+    if (tags.has(q.tag) || usedItems.has(q.item) || seenInSet(keys, q)) continue;
+    tags.add(q.tag); usedItems.add(q.item); tilesOut.push(q); keys.push(sentKey(q));
   }
   for (const q of rank(AUTHORED.filter(q => q.kind === "situation" && byH.has(q.item) && !usedIds.has(q.id) && !usedItems.has(q.item)))) {
     if (tilesOut.length + sitOut.length >= n) break;
-    if (tags.has(q.tag)) continue;
-    tags.add(q.tag); sitOut.push(q);
+    if (tags.has(q.tag) || seenInSet(keys, q)) continue;
+    tags.add(q.tag); sitOut.push(q); keys.push(sentKey(q));
   }
   // 카드 문제 사이에 고르기 문제를 끼워 연달아 나오지 않게
   const out = [];
