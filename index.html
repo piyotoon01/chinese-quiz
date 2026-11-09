@@ -343,9 +343,9 @@ input.answer:focus { outline: none; border-color: var(--accent); }
 </head>
 <body>
 <div class="wrap" id="app"></div>
-<script src="data/items.js?v=202611060500"></script>
-<script src="data/questions.js?v=202611060500"></script>
-<script src="data/near.js?v=202611060500"></script>
+<script src="data/items.js?v=202611090432"></script>
+<script src="data/questions.js?v=202611090432"></script>
+<script src="data/near.js?v=202611090432"></script>
 <script>
 "use strict";
 (() => {
@@ -522,7 +522,8 @@ const autoOk = it => simpleWord(it) && !AUTO_SKIP.has(ZH_ONLY(it.h)) && !isParti
 function dm(it) {
   const m = String(it.m || "").split(/\s+—\s+/)[0]
     .replace(/\s*\([^()]*[A-Za-z一-鿿][^()]*\)/g, "")
-    .replace(/\s*\((얼화음|경성|[1-4]성)\)/g, "").trim();
+    .replace(/\s*\((얼화음|경성|[1-4]성)\)/g, "")
+    .replace(/\s*\([^()]*$/, "").trim(); // ' — ' 에서 잘려 닫는 괄호가 없는 설명(着는 zháo)도 뗀다
   return m || it.m;
 }
 // 받침에 맞는 조사: josa('여기', '이에요', '예요') → 예요
@@ -1224,9 +1225,9 @@ function diagnose(got, want) {
 const canSpeak = "speechSynthesis" in window;
 // 이 기기에 중국어 음성이 있는지: null = 아직 모름(음성 목록을 불러오는 중), true/false
 let ZH_VOICE = canSpeak ? null : false;
-function zhVoice() {
+function zhVoice(localOnly) {
   // 광둥어(zh-HK) 음성은 표준어 발음이 아니라서 쓰지 않는다
-  const vs = speechSynthesis.getVoices().filter(v => !/HK|yue|cantonese/i.test(v.lang + " " + v.name));
+  const vs = speechSynthesis.getVoices().filter(v => !/HK|yue|cantonese/i.test(v.lang + " " + v.name) && (!localOnly || v.localService));
   return vs.find(v => /^zh[-_]CN/i.test(v.lang)) || vs.find(v => /^(zh|cmn)/i.test(v.lang));
 }
 // 발음 듣기 버튼은 중국어 음성이 없다고 확인된 기기에서는 숨긴다
@@ -1245,7 +1246,8 @@ function say(text, rate) {
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text.replace(/[A-Za-z가-힣+~]/g, ""));
     u.lang = "zh-CN"; u.rate = rate || .8;
-    const v = zhVoice();
+    // 인터넷 음성(구글 등)은 속도를 무시하는 기기가 많아서, 천천히일 땐 기기 안의 음성을 먼저 쓴다
+    const v = (rate && rate < .7 && zhVoice(true)) || zhVoice();
     if (v) u.voice = v;
     speechSynthesis.speak(u);
   } catch (e) {}
@@ -1686,7 +1688,7 @@ function Quiz(s) {
       el("button", { class: "play", "aria-label": "다시 듣기", onclick: () => say(q.listen) }, "🔊"),
       el("div", null,
         el("div", { class: "note" }, "버튼을 누르면 다시 들려요"),
-        el("button", { class: "speak", onclick: () => say(q.listen, .55) }, "🐢 천천히 듣기"))));
+        el("button", { class: "speak", onclick: () => say(q.listen, .4) }, "🐢 천천히 듣기"))));
   }
   const fb = el("div");
   const next = el("button", { class: "btn", onclick: goNext }, no === total ? "결과 보기" : "다음 문제 →");
@@ -1842,7 +1844,7 @@ function Quiz(s) {
   if (q.accept) body.append(fb, area); else body.append(area, fb);
 
   function showHint(why) {
-    if (q.listen) say(q.listen, .55); // 듣기 문제의 힌트는 천천히 한 번 더
+    if (q.listen) say(q.listen, .4); // 듣기 문제의 힌트는 천천히 한 번 더
     fill(fb, el("div", { class: "feedback hint" },
       el("h3", null, "아쉬워요, 한 번 더!"),
       why ? el("p", { class: "note" }, why) : null,
