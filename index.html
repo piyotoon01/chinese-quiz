@@ -13,7 +13,7 @@
 <meta name="theme-color" content="#34507a">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@800;900&family=Noto+Sans+KR:wght@400;500;700;800&family=Noto+Sans+SC:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&family=Noto+Sans+KR:wght@400;500;700;800&family=Noto+Sans+SC:wght@500;700&display=swap" rel="stylesheet">
 <style>
 /* 디자인: 먹빛 남색 + 동글동글 (10/11 사용자 선택 — 색은 D2, 모양은 듀오링고처럼 둥글고 통통하게) */
 :root {
@@ -43,6 +43,8 @@
   --fs: 17px;
   --zh: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
   --round: "Nunito", "Noto Sans KR", sans-serif; /* 제목·숫자·버튼: 둥근 숫자 */
+  /* 병음: Noto Sans KR 은 ā·ē·ī 의 1성 줄이 글자 오른쪽으로 밀려 찍혀서(11/11 사용자 지적) 성조 기호가 다 있는 Nunito 로 */
+  --py: "Nunito", "Segoe UI", -apple-system, Roboto, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -157,6 +159,7 @@ button.mini:disabled .mi { filter: grayscale(1); opacity: .5; }
     linear-gradient(transparent calc(50% - .5px), var(--accent-line) calc(50% - .5px), var(--accent-line) calc(50% + .5px), transparent calc(50% + .5px));
 }
 .big-py { text-align: center; color: var(--muted); margin-bottom: 8px; }
+.py, .big-py, .fpy, .rb rt, .pyc { font-family: var(--py); }
 .sentence { font-family: var(--zh); font-size: 1.7em; font-weight: 700; text-align: center; margin: 4px 0 18px; letter-spacing: .02em; }
 .choices { display: grid; gap: 12px; }
 .choice {
@@ -244,7 +247,7 @@ input.answer:focus { outline: none; border-color: var(--accent); }
 /* 글자 위 병음 */
 .full .zh.rb { font-size: 1.3em; line-height: 2.3; }
 .rb ruby { margin: 0 .08em; }
-.rb rt { font-family: "Noto Sans KR", sans-serif; font-size: .5em; font-weight: 500; color: var(--muted); letter-spacing: 0; }
+.rb rt { font-size: .5em; font-weight: 500; color: var(--muted); letter-spacing: 0; }
 .more { color: inherit; opacity: .8; font-size: .88em; font-weight: 800; padding: 6px 0 2px; }
 .extra { padding-top: 2px; }
 .report { text-align: center; }
@@ -369,6 +372,37 @@ input.answer:focus { outline: none; border-color: var(--accent); }
 .wtop .rk { flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--chip); display: grid; place-items: center; font-family: var(--round); font-weight: 900; font-size: .85em; }
 .wtop .bd { flex: 1; min-width: 0; }
 .wtop .speak { margin: 0; flex: none; }
+/* 단어장 암기 카드 (11/11) */
+.fcard { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 300px; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
+.fcard.back { cursor: default; justify-content: flex-start; align-items: stretch; text-align: left; }
+.fcard .big-zh { margin: 8px auto 10px; font-size: 2.8em; }
+.fcard .tap { color: var(--muted); font-size: .88em; font-weight: 700; margin: 6px 0 0; }
+.fcard .qlabel { align-self: center; }
+.fhead { text-align: center; }
+.fhead .big-zh { margin-bottom: 6px; }
+.fcard .fsent { margin: 10px 0 12px; font-size: 1.8em; line-height: 1.45; }
+.fpy { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 1.15em; font-weight: 700; color: var(--accent); }
+.fpy .speak { margin: 0; }
+.fmean { font-size: 1.2em; font-weight: 800; text-align: center; margin: 10px 0 4px; line-height: 1.45; }
+.fsec { border-top: 2px solid var(--chip); margin-top: 14px; padding-top: 12px; }
+.fsec .label { margin-bottom: 6px; }
+.fsec .zh.rb { font-size: 1.3em; line-height: 2.3; }
+.fsec .m { color: var(--muted); font-weight: 500; }
+.rb .hl, .zh .hl { color: var(--accent); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.fsib { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; padding: 2px 0; }
+.fsib .zh { font-size: 1.15em; font-weight: 700; }
+.fsib .py { color: var(--muted); font-size: .9em; }
+.rate { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.rate .btn { margin: 0; min-height: 60px; padding: 8px 6px; font-size: 1em; flex-direction: column; gap: 0; line-height: 1.25; }
+.rate .btn small { font-weight: 600; font-size: .72em; opacity: .85; }
+.rate .no { background: var(--bad); box-shadow: 0 4px 0 var(--bad-deep); }
+.rate .so { background: var(--warn); box-shadow: 0 4px 0 var(--warn-deep); }
+.rate .yes { background: var(--ok); box-shadow: 0 4px 0 var(--ok-deep); }
+.stat.four div { padding: 10px 4px; }
+.stat.four b { font-size: 1.45em; }
+.fclist li { display: flex; align-items: center; gap: 12px; }
+.fclist .bd { flex: 1; min-width: 0; }
+.fclist .speak { margin: 0; flex: none; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .tick path { stroke-dashoffset: 0; }
@@ -401,7 +435,7 @@ function load() {
   try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { STORAGE_OK = false; return {}; }
 }
 try { localStorage.setItem(KEY + ".test", "1"); localStorage.removeItem(KEY + ".test"); } catch (e) { STORAGE_OK = false; }
-const db = Object.assign({ prog: {}, settings: {}, session: null, days: [], notes: {} }, load());
+const db = Object.assign({ prog: {}, settings: {}, session: null, days: [], notes: {}, wb: {} }, load());
 function save() { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) { STORAGE_OK = false; } }
 // 브라우저가 저장 공간이 모자랄 때 이 사이트 기록부터 지우지 않게 부탁한다 (안 되는 브라우저는 그냥 넘어감)
 try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {}); } catch (e) {}
@@ -840,7 +874,7 @@ function DialogBox(d, mode) {
       el("span", { class: "who" }, (d.roles || {})[l.s] || l.s),
       el("div", { class: "bub" },
         ruby ? el("div", { class: "zh rb" }, ruby.map(([c, r]) => (r === null ? c : el("ruby", null, c, el("rt", null, r))))) : el("div", { class: "zh" }, l.h),
-        mode === "full" && !ruby ? el("div", { class: "m" }, l.p) : null,
+        mode === "full" && !ruby ? el("div", { class: "m py" }, l.p) : null,
         mode === "full" ? el("div", { class: "m" }, l.m) : null));
   });
   return { box: el("div", { class: "dlg" + (mode === "veil" ? " veil" : ""), "aria-label": "대화" }, rows), rows };
@@ -1486,7 +1520,7 @@ function Home() {
     Quiz();
   };
   const notes = noteItems(), openN = notes.length, againN = notes.filter(it => (db.notes[it.id].r || 1) >= 2).length;
-  const studied = withQ.length - unseenN; // 한 번이라도 풀어 본 단어 — 첫날부터 늘어나는 게 보이게
+  const fc = fcCounts(), fcT = fcToday(), fcN = fcT.due.length + fcT.nw.length; // 단어장 (복습 퀴즈와 따로)
   const shortDay = d => koDate(d).replace(/^\d+년 /, "").replace(/ \(.\)/, "");
   // 첫 화면: ① 이번 주 도장 ② 오늘 할 공부 한 줄 + 시작 버튼 ③ 오답 노트·익힌 단어. 설정·백업은 ⚙ 화면으로
   mount(
@@ -1525,10 +1559,10 @@ function Home() {
         el("span", { class: "mi" }, "📒"), el("b", null, "오답 노트"),
         el("small", null, openN ? `${openN} / ${NOTE_GOAL}개` + (againN ? ` · 2차 ${againN}` : "") : "틀린 단어가 없어요"),
         openN ? el("div", { class: "pbar" }, el("i", { style: `width:${Math.min(100, Math.round(openN / NOTE_GOAL * 100))}%` })) : null),
-      el("div", { class: "card mini" },
-        el("span", { class: "mi" }, "🌱"), el("b", null, "공부한 단어"),
-        el("small", null, `${studied} / ${withQ.length}개`),
-        el("div", { class: "pbar" }, el("i", { style: `width:${Math.round(studied / Math.max(1, withQ.length) * 100)}%` })))
+      el("button", { class: "card mini", onclick: () => WordBook() },
+        el("span", { class: "mi" }, "🃏"), el("b", null, "단어장"),
+        el("small", null, fcN ? `오늘 카드 ${fcN}장` + (fc.done ? ` · 외움 ${fc.done}` : "") : `외운 단어 ${fc.done} / ${FC_ITEMS.length}`),
+        el("div", { class: "pbar" }, el("i", { style: `width:${Math.round(fc.done / Math.max(1, FC_ITEMS.length) * 100)}%` })))
     ),
     ReportTile(),
     BackupNag(),
@@ -1619,7 +1653,7 @@ function Report(off) {
         el("span", { class: "rk" }, i + 1),
         el("div", { class: "bd" },
           el("div", null, el("span", { class: "zh" }, it.h), el("span", { class: "tag bad" }, `${c}번`)),
-          el("div", { class: "note", style: "color:var(--muted);margin:0" }, it.p),
+          el("div", { class: "note py", style: "color:var(--muted);margin:0" }, it.p),
           el("div", { class: "note", style: "margin:0" }, dm(it))),
         canHear() && PURE_ZH.test(it.h) ? el("button", { class: "speak", "aria-label": "듣기", onclick: () => say(it.h) }, "🔊") : null))),
       again.length ? el("button", { class: "btn mt", onclick: () => startPractice(again) }, `이 말들 다시 풀기 · ${again.length}개`) : null) : null,
@@ -1757,7 +1791,7 @@ function saveTip() {
 // 기록을 코드 한 줄로 복사해 두었다가(카톡 '나에게 보내기' 등) 다른 기기나 브라우저에서 불러온다
 function backup() {
   db.bk = today(); save(); // 첫 화면의 '백업한 지 N일' 알림용
-  const code = "CNQ1:" + btoa(unescape(encodeURIComponent(JSON.stringify({ prog: db.prog, days: db.days, settings: S, notes: db.notes, log: db.log || {} }))));
+  const code = "CNQ1:" + btoa(unescape(encodeURIComponent(JSON.stringify({ prog: db.prog, days: db.days, settings: S, notes: db.notes, log: db.log || {}, wb: db.wb || {}, wbNew: db.wbNew || null }))));
   const done = () => alert("백업 코드를 복사했어요. 카카오톡 '나에게 보내기' 같은 곳에 붙여 넣어 보관하세요.");
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(done, () => prompt("아래 코드를 길게 눌러 복사해 두세요.", code));
   else prompt("아래 코드를 길게 눌러 복사해 두세요.", code);
@@ -1773,6 +1807,8 @@ function restore() {
     db.prog = data.prog; db.days = Array.isArray(data.days) ? data.days : [];
     db.notes = data.notes && typeof data.notes === "object" ? data.notes : {}; // 오답 노트가 생기기 전 백업에는 없다
     db.log = data.log && typeof data.log === "object" ? data.log : {};       // 주간 리포트 기록 (11/9 전 백업에는 없다)
+    db.wb = data.wb && typeof data.wb === "object" ? data.wb : {};          // 단어장 카드 기록 (11/11 전 백업에는 없다)
+    db.wbNew = data.wbNew || null;
     upgradeNotes();
     Object.assign(S, data.settings || {});
     db.session = null; save(); applyBig(); Home();
@@ -1792,7 +1828,7 @@ function ListenToggle() {
 }
 function resetAll() {
   if (!confirm("기록을 모두 지울까요? 되돌릴 수 없어요.")) return;
-  db.prog = {}; db.session = null; db.days = []; db.notes = {}; db.log = {}; save(); Home();
+  db.prog = {}; db.session = null; db.days = []; db.notes = {}; db.log = {}; db.wb = {}; db.wbNew = null; save(); Home();
 }
 function KeyboardAsk() {
   const set = v => { S.kbd = v; save(); Home(); };
@@ -1880,7 +1916,7 @@ function Quiz(s) {
   if (!ses) return Home();
   // 답한 뒤 ←로 나갔다 이어 풀면 그 문제는 건너뛴다 (같은 문제를 다시 풀어 결과를 덮어쓰지 않게)
   while (ses.idx < ses.qs.length && ses.res[ses.idx]) ses.idx++;
-  if (ses.idx >= ses.qs.length) return ses.practice ? PracticeDone(ses) : Results();
+  if (ses.idx >= ses.qs.length) return ses.wq ? WordQuizDone(ses) : ses.practice ? PracticeDone(ses) : Results();
   const q = ses.qs[ses.idx], total = ses.qs.length, no = ses.idx + 1;
   const it = byId.get(q.itemId);
   let tries = 0, done = false, typedAlt = null;
@@ -1892,7 +1928,9 @@ function Quiz(s) {
     ses.qs.map((x, i) => el("i", { class: i < ses.idx ? ses.res[i] || "" : i === ses.idx ? "now" : "" })));
   const head = el("div", null,
     el("div", { class: "top" },
-      ses.practice
+      ses.wq
+        ? el("button", { class: "back", "aria-label": "단어장으로", onclick: () => { practiceSes = null; WordBook(); } }, "←")
+        : ses.practice
         ? el("button", { class: "back", "aria-label": "오답 노트로", onclick: () => WrongNote() }, "←")
         : el("button", { class: "back", "aria-label": "처음 화면으로", onclick: Home }, "←"),
       cells,
@@ -1900,7 +1938,7 @@ function Quiz(s) {
     )
   );
   // 문제 위에는 지시문만 크게. 유형·주제 태그는 빼고, 말하기 연습·오답 다시 풀기일 때만 작은 표시
-  const label = q.section === "speak" ? "🗣 말하기 연습" : ses.practice ? "📒 오답 퀴즈" : q.dlg ? `💬 짧은 대화 · ${q.dlg.title}` : "";
+  const label = q.section === "speak" ? "🗣 말하기 연습" : ses.wq ? "🃏 단어장 퀴즈" : ses.practice ? "📒 오답 퀴즈" : q.dlg ? `💬 짧은 대화 · ${q.dlg.title}` : "";
   const body = el("div", { class: "card qcard" }, label ? el("p", { class: "qlabel" }, label) : null);
   // 짧은 대화: 말풍선(듣기면 글자를 가림) + 다시 듣기 → 그 아래 질문. 답하면 글자·병음·뜻을 펼친다
   let dlgPlay = null, dlgReveal = () => {};
@@ -1978,7 +2016,7 @@ function Quiz(s) {
     };
   } else if (q.choices) {
     const zhChoices = /hanzi_mc|fill_mc|cloze_mc|situation|listen_word/.test(q.kind);
-    const btns = q.choices.map((c, i) => el("button", { class: "choice" + (zhChoices ? " zhc" : ""), onclick: () => submit(i) },
+    const btns = q.choices.map((c, i) => el("button", { class: "choice" + (zhChoices ? " zhc" : "") + (q.kind === "tone_mc" ? " pyc" : ""), onclick: () => submit(i) },
       el("span", { class: "n" }, i + 1), el("span", null, c)));
     area = el("div", { class: "choices" }, btns);
     if (q.listen) {
@@ -2113,7 +2151,7 @@ function Quiz(s) {
       const main = k > 0 && all[k] ? k : 0;
       full = all[main];
       all.filter((x, i) => i !== main).forEach(x =>
-        extra.push(el("p", { class: "note" }, el("b", null, "이렇게도 맞아요 "), el("span", { class: "zh" }, x.h), ` ${x.p}`)));
+        extra.push(el("p", { class: "note" }, el("b", null, "이렇게도 맞아요 "), el("span", { class: "zh" }, x.h), " ", el("span", { class: "py" }, x.p))));
     }
     if (q.explain && !q.pairs) extra.push(el("p", { class: "note" }, q.explain));
     if (it && !q.explain && !q.pairs && !q.dlg) { // 짝 맞추기는 네 짝이 다 보이니 한 단어의 성조·예문은 덧붙이지 않는다
@@ -2137,7 +2175,7 @@ function Quiz(s) {
       el("h3", null, title),
       why && result === "miss" ? el("p", { class: "note" }, why) : null,
       typedAlt ? el("p", { class: "note" }, el("b", null, "이렇게 써도 정답 "),
-        el("span", { class: "zh" }, typedAlt), byH.get(typedAlt) ? ` ${byH.get(typedAlt).p}` : "",
+        el("span", { class: "zh" }, typedAlt), byH.get(typedAlt) ? [" ", el("span", { class: "py" }, byH.get(typedAlt).p)] : "",
         " — ", el("span", { class: "zh" }, `${q.accept[0]} = ${typedAlt}`), ", 뜻이 같아요.") : null,
       q.pairs ? pairsBox(q) : el("div", { class: "full" },
         // 병음은 글자마다 위에 단다 (글자와 음절 수가 안 맞는 항목 이름 등은 예전처럼 아래 한 줄로)
@@ -2158,7 +2196,7 @@ function Quiz(s) {
     }
     fit();
     ses.res[ses.idx] = result; save();
-    if (ses.practice) applyPractice(ses, ses.idx);
+    if (ses.wq) applyWordQuiz(ses, ses.idx); else if (ses.practice) applyPractice(ses, ses.idx);
     // 확인에 쓴 키 입력이 끝난 뒤에 초점을 옮긴다 — 다음 엔터 한 번으로 다음 문제로 간다
     setTimeout(() => next.focus({ preventScroll: true }), 0);
   }
@@ -2185,7 +2223,7 @@ function PastQ(ses, i) {
   if (q.listen && canHear()) card.append(el("button", { class: "speak", onclick: () => say(q.listen) }, "🔊 문제 다시 듣기"));
   const zhc = /hanzi_mc|fill_mc|cloze_mc|situation|listen_word/.test(q.kind);
   if (q.choices) card.append(el("div", { class: "choices" }, q.choices.map((c, k) =>
-    el("button", { class: "choice" + (zhc ? " zhc" : "") + (k === q.answer ? " right" : mine.includes(c) ? " picked" : ""), disabled: true },
+    el("button", { class: "choice" + (zhc ? " zhc" : "") + (q.kind === "tone_mc" ? " pyc" : "") + (k === q.answer ? " right" : mine.includes(c) ? " picked" : ""), disabled: true },
       el("span", { class: "n" }, k === q.answer ? "✓" : mine.includes(c) ? "✗" : k + 1), el("span", null, c)))));
   else if (mine.length) card.append(el("p", { class: "note" }, el("b", null, "내 답 "), el("span", { class: "zh" }, mine.join(", "))));
   const full = q.full || (it ? fullOf(it) : null);
@@ -2264,7 +2302,7 @@ function Results() {
         const f = q.full || fullOf(byId.get(q.itemId));
         return el("li", null,
           el("div", null, el("span", { class: "zh" }, f.h), el("span", { class: "tag " + (r === "hint" ? "hint" : "bad") }, r === "hint" ? "힌트 후 맞힘" : "틀림")),
-          el("div", { class: "note", style: "color:var(--muted)" }, f.p),
+          el("div", { class: "note py", style: "color:var(--muted)" }, f.p),
           el("div", { class: "note" }, f.m),
           canHear() ? el("button", { class: "speak", onclick: () => say(f.h) }, "🔊 듣기") : null
         );
@@ -2351,6 +2389,313 @@ function PracticeDone(ses) {
     el("button", { class: "btn ghost", onclick: Home }, "처음으로")
   );
   if (answered && cnt.ok === answered) setTimeout(confetti, 150);
+}
+
+// ---------- 단어장: 암기 카드 (11/11 사용자 요청) ----------
+// 복습 퀴즈와 완전히 따로 돈다 — db.wb 만 쓰고 db.prog·오답 노트·주간 리포트·공부 도장은 건드리지 않는다
+// db.wb[id] = { s 외움 단계 0~3, d 다음 볼 날, n 본 횟수, k 몰라요 횟수, f 처음 본 날, l 마지막으로 본 날, qx 단어장 퀴즈에서 틀린 수 }
+// db.wbNew = { d 날짜, n 그날 처음 본 새 카드 수 } — 새 카드는 하루 FC_NEW 장까지 (단어가 늘어도 하루 분량이 터지지 않게)
+const FC_NEW = 15;
+const FC_GAP = [1, 2, 5, 14];   // '알아요'로 오른 단계별 다음에 볼 날. 이미 외움(3)에서 또 알면 30일 뒤
+const FC_DAY = 40;              // 하루 카드 총량 — 다시 볼 카드 먼저, 남는 자리에 새 카드 (11/11 점검: 새 카드 15장 고정이면 2주 뒤 하루 50~70장으로 불어남)
+// 앞면 글자: '点 (주문하다)' 같은 괄호 설명은 뜻이 보이니 뗀다
+const fcFront = it => String(it.h).replace(/\s*[(（][^()（）]*[)）]\s*/g, "").trim();
+// 카드로 쓸 항목: 종류가 '단어'인 것만 (11/11 사용자: 문장형 표현은 빼고 단어만). 문법 용어·조사도 뺀다. 최근 배운 것부터
+const FC_ALL = ITEMS.filter(it => it.t === "단어" && /[一-鿿]/.test(it.h) && !/[가-힣+]/.test(fcFront(it))
+    && !AUTO_SKIP.has(ZH_ONLY(it.h)) && !WORD_SKIP.has(ZH_ONLY(it.h)))
+  .map((it, i) => [it, i]).sort((a, b) => (b[0].d || "").localeCompare(a[0].d || "") || a[1] - b[1]).map(x => x[0]);
+// 앞면·병음이 같은 항목(点 시/주문하다, 还, 那, 月 등 7쌍)은 카드 한 장으로 — 가장 최근 배운 항목이 대표, 뒷면에 뜻을 모두 보여 준다
+// (따로 두면 앞면은 같은데 뒷면 뜻이 하나라, 다른 뜻을 떠올린 사람이 알면서도 '몰라요'를 누르게 된다)
+const FC_ITEMS = [], FC_GROUP = new Map(), FC_REP = new Map();
+(() => {
+  const key = it => fcFront(it) + "|" + plain(it.p).replace(/\s/g, ""), first = new Map();
+  FC_ALL.forEach(it => {
+    const r = first.get(key(it));
+    if (r) { FC_GROUP.get(r.id).push(it); FC_REP.set(it.id, r.id); return; }
+    first.set(key(it), it); FC_GROUP.set(it.id, [it]); FC_REP.set(it.id, it.id); FC_ITEMS.push(it);
+  });
+})();
+const fcGroup = it => FC_GROUP.get(it.id) || [it];
+const fcRepOf = id => FC_REP.get(id) || id;
+// 뒷면 뜻 줄: 묶인 항목마다 한 줄. 다른 줄에 이미 들어 있는 뜻(下 '아래')은 뺀다
+function fcMeans(it) {
+  const ms = fcGroup(it).map(dm);
+  return ms.filter((m, i) => ms.indexOf(m) === i && !ms.some((o, j) => j !== i && o !== m && o.includes(m)));
+}
+// 카드 🔊: 한 글자만 읽히면 음성이 다른 소리로 읽는 글자(还 huán·只 zhī·几 jī)와 '소리가 이상해요'로 뺀 말은 단어 소리를 내지 않는다 (예문 듣기는 그대로)
+const fcSayable = f => canHear() && !LISTEN_SKIP.has(ZH_ONLY(f)) && !oddSound(f);
+function fcNewLeft() { const w = db.wbNew; return Math.max(0, FC_NEW - (w && w.d === today() ? w.n : 0)); }
+function fcCounts() {
+  const c = { done: 0, mid: 0, low: 0, none: 0 };
+  FC_ITEMS.forEach(it => { const w = db.wb[it.id]; if (!w) c.none++; else if (w.s >= 3) c.done++; else if (w.s >= 1) c.mid++; else c.low++; });
+  return c;
+}
+// 오늘 볼 카드: 하루 FC_DAY 장 안에서 다시 볼 카드 먼저(오래 밀린 것부터, 같으면 못 외운 것), 남는 자리에 새 카드(최근 배운 것부터, 하루 15장까지)
+// 단계 순으로만 고르면 밀린 날 '외움' 확인 카드가 끝없이 뒤로 밀린다. 오늘 이미 본 카드도 총량에 넣는다
+function fcToday() {
+  const t = today(), w = id => db.wb[id];
+  const seenToday = FC_ITEMS.filter(it => w(it.id) && w(it.id).l === t).length;
+  const all = FC_ITEMS.filter(it => w(it.id) && w(it.id).d <= t)
+    .sort((a, b) => w(a.id).d.localeCompare(w(b.id).d) || w(a.id).s - w(b.id).s || (b.d || "").localeCompare(a.d || ""));
+  const room = Math.max(0, FC_DAY - seenToday);
+  const due = all.slice(0, room);
+  const nw = FC_ITEMS.filter(it => !w(it.id)).slice(0, Math.min(fcNewLeft(), room - due.length));
+  return { due, nw, rest: all.length - due.length };
+}
+let fcSes = null;
+// q 남은 카드 순서, first 이번 판에서 처음 누른 답(0 몰라요·1 헷갈려요·2 알아요), extra 연습 판(단계·날짜 안 바꿈)
+function newFlash(ids, extra) {
+  if (!ids.length) return false;
+  fcSes = { q: ids.slice(), first: {}, total: ids.length, done: 0, flip: false, extra: !!extra };
+  return true;
+}
+function startFlash(ids, extra) { if (newFlash(ids, extra)) Flash(); else WordBook(); }
+function fcRecord(id, r) {
+  const t = today(), was = db.wb[id], w = Object.assign({ s: 0, n: 0, k: 0 }, was);
+  if (!was) { w.f = t; db.wbNew = db.wbNew && db.wbNew.d === t ? { d: t, n: db.wbNew.n + 1 } : { d: t, n: 1 }; }
+  w.n++; w.l = t;
+  if (r === 2) { const gap = w.s >= 3 ? 30 : FC_GAP[w.s + 1]; w.s = Math.min(3, w.s + 1); w.d = addDays(t, gap); }
+  else if (r === 1) { w.s = Math.max(0, w.s - 1); w.d = addDays(t, 1); } // 헷갈려요: 한 단계 아래로, 내일 다시 (그대로 두면 다음 날 알아요 한 번에 '외움'이 됐다)
+  else { w.s = 0; w.k++; w.d = addDays(t, 1); }                         // 몰라요: 처음부터, 내일 다시
+  db.wb[id] = w; save();
+}
+function fcRate(r) {
+  const s = fcSes, id = s.q.shift();
+  // 기록은 이번 판에서 처음 누른 답으로만 — 몰라요 뒤에 판 안에서 다시 보고 '알아요'를 눌러도 내일 또 나온다
+  if (!(id in s.first)) { s.first[id] = r; if (!s.extra) fcRecord(id, r); }
+  if (r < 2) s.q.splice(Math.min(s.q.length, r === 0 ? 3 : 6), 0, id); // 몰라요는 3장 뒤, 헷갈려요는 6장 뒤에 다시
+  else s.done++;
+  s.flip = false;
+  if (s.q.length) Flash(); else FlashDone();
+}
+// 예문 한 줄 — 글자 위 병음, 이 단어 글자는 밑줄
+// 밑줄 자리: 이 단어가 더 긴 단어 속에 든 자리(晚 카드인데 晚上)는 건너뛰고 따로 쓰인 자리를 찾는다. 없으면 처음 나온 자리
+const FC_FRONTS = [...new Set(ITEMS.map(fcFront).filter(f => /^[一-鿿]+$/.test(f)))];
+function fcHlAt(h, key) {
+  if (!key) return -1;
+  const longer = FC_FRONTS.filter(f => f.length > key.length && f.includes(key));
+  for (let at = h.indexOf(key); at >= 0; at = h.indexOf(key, at + 1)) {
+    if (!longer.some(f => { const off = f.indexOf(key); return at - off >= 0 && h.substr(at - off, f.length) === f; })) return at;
+  }
+  return h.indexOf(key);
+}
+function fcExample(it) {
+  const key = hanOf(fcFront(it));
+  let ex = null;
+  for (const g of fcGroup(it)) { const e = parseEx(g); if (e && hanOf(e.h) !== key) { ex = e; break; } }
+  if (!ex) return null;
+  const at = fcHlAt(ex.h, key), hl = i => at >= 0 && i >= at && i < at + key.length;
+  const ruby = alignPy(ex.h, ex.p);
+  const line = ruby
+    ? el("div", { class: "zh rb" }, ruby.map(([c, r], i) => (r === null ? (hl(i) ? el("span", { class: "hl" }, c) : c) : el("ruby", { class: hl(i) ? "hl" : null }, c, el("rt", null, r)))))
+    : [el("div", { class: "zh" }, [...ex.h].map((c, i) => (hl(i) ? el("span", { class: "hl" }, c) : c))), el("div", { class: "m py" }, ex.p)];
+  return el("div", { class: "fsec" },
+    el("div", { style: "display:flex;align-items:center;justify-content:space-between;gap:8px" },
+      el("p", { class: "label", style: "margin:0" }, "예문"),
+      canHear() ? el("button", { class: "speak", onclick: () => say(ex.h) }, "🔊 듣기") : null),
+    line, el("div", { class: "m" }, ex.m));
+}
+// 같이 외우면 좋은 말: 이 단어를 품거나 이 단어에 들어가는 다른 카드 (急 ↔ 着急), 최근 배운 것 먼저 2개
+function fcSiblings(it) {
+  const me = hanOf(fcFront(it));
+  if (!me || me.length > 4) return [];
+  return FC_ITEMS.filter(o => {
+    const f = fcFront(o), h = hanOf(f);
+    return o.id !== it.id && /^[一-鿿]+$/.test(f) && h !== me && h.length <= 4 && (h.includes(me) || me.includes(h));
+  }).slice(0, 2);
+}
+function Flash() {
+  const s = fcSes, it = byId.get(s.q[0]), w = db.wb[it.id];
+  const front = fcFront(it);
+  // 네 글자 넘는 표현·문장은 田자 칸 대신 문장 글씨로 (칸 안에서 줄이 꺾이면 읽기 어렵다)
+  const face = () => hanOf(front).length > 4 ? el("div", { class: "sentence fsent" }, front) : el("div", { class: "big-zh" }, front);
+  const tag = s.extra ? "한 판 더" : !w ? "새 카드" : w.s === 0 ? "못 외운 카드" : "다시 보기";
+  const top = el("div", { class: "top" },
+    el("button", { class: "back", "aria-label": "단어장으로", onclick: () => { fcSes = null; WordBook(); } }, "←"),
+    el("div", { class: "pbar", style: "flex:1;margin:0;height:14px" }, el("i", { style: `width:${Math.round(s.done / s.total * 100)}%` })),
+    el("span", { class: "count" }, `${s.done} / ${s.total}`));
+  const flip = () => { if (s.flip) return; s.flip = true; Flash(); };
+  if (!s.flip) {
+    mount(top,
+      el("div", { class: "card fcard", role: "button", tabindex: "0", "aria-label": "카드 뒤집기", onclick: flip },
+        el("span", { class: "qlabel" }, tag),
+        face(),
+        el("p", { class: "tap" }, fcMeans(it).length > 1 ? `뜻이 ${fcMeans(it).length}가지예요 — 모두 떠올려 보세요` : "뜻이 떠오르면 눌러서 확인해요")),
+      el("button", { class: "btn", onclick: flip }, "뜻 보기"));
+    return;
+  }
+  const grp = fcGroup(it), means = fcMeans(it);
+  const pron = [...new Set([].concat(...grp.map(g => g.pron || [])).filter(Boolean))];
+  const sib = fcSiblings(it);
+  const rate = (r, cls, t, sub) => el("button", { class: "btn " + cls, onclick: () => { if (!fresh()) fcRate(r); } }, t, el("small", null, sub));
+  mount(top,
+    el("div", { class: "card fcard back" },
+      el("div", { class: "fhead" },
+        face(),
+        el("div", { class: "fpy" }, el("span", null, it.p),
+          fcSayable(front) ? el("button", { class: "speak", "aria-label": "발음 듣기", onclick: () => say(front) }, "🔊") : null)),
+      means.length > 1
+        ? el("div", { class: "fmean" }, means.map(m => el("div", null, "· " + m)))
+        : el("p", { class: "fmean" }, means[0]),
+      // 노션 뜻 칸의 괄호·— 메모(饱 부정은 没 등)는 작게 따로 (한 장짜리 카드만)
+      grp.length === 1 && dm(it) !== String(it.m || "").trim() ? el("p", { class: "note", style: "text-align:center;color:var(--muted);margin-top:0" }, it.m) : null,
+      pron.length ? el("p", { class: "note", style: "text-align:center;color:var(--muted)" }, "발음 주의 · " + pron.join(", ")) : null,
+      fcExample(it),
+      sib.length ? el("div", { class: "fsec" }, el("p", { class: "label" }, "같이 외우면 좋은 말"),
+        sib.map(o => el("div", { class: "fsib" }, el("span", { class: "zh" }, fcFront(o)), el("span", { class: "py" }, o.p), el("span", null, dm(o))))) : null),
+    el("div", { class: "rate" },
+      rate(0, "no", "몰라요", "곧 다시"),
+      rate(1, "so", "헷갈려요", "조금 뒤 다시"),
+      rate(2, "yes", "알아요", s.extra ? "넘어가기" : "한 단계 ↑")));
+}
+function FlashDone() {
+  const s = fcSes, ids = Object.keys(s.first);
+  const knew = ids.filter(id => s.first[id] === 2), hard = ids.filter(id => s.first[id] < 2);
+  fcSes = null;
+  const left = fcToday();
+  const qN = ids.filter(id => fcGroup(byId.get(id)).some(autoOk)).length; // 방금 본 카드로 바로 확인 퀴즈
+  mount(
+    el("div", { class: "rhead" },
+      el("h1", null, s.extra ? "한 판 더 끝!" : knew.length === ids.length ? "전부 알았어요! 🎉" : "카드 끝!"),
+      el("p", { class: "sub" }, `${ids.length}장`),
+      ids.length ? Stamp(knew.length, ids.length, today()) : null),
+    el("div", { class: "card" },
+      el("div", { class: "stat" },
+        el("div", null, el("b", { style: "color:var(--ok)" }, knew.length), el("span", null, "바로 알았어요")),
+        el("div", null, el("b", { style: "color:var(--bad)" }, hard.length), el("span", null, "다시 봤어요"))),
+      el("p", { class: "note mt" }, s.extra ? "연습 판은 외움 단계에 들어가지 않아요."
+        : hard.length ? "다시 본 카드는 내일 또 나와요. 알아요를 누른 카드는 며칠 뒤에 한 번 더 확인해요."
+        : "알아요를 누른 카드는 며칠 뒤에 한 번 더 확인해요.")),
+    hard.length ? el("div", { class: "card" },
+      el("p", { class: "label" }, "어려웠던 단어"),
+      el("ul", { class: "list fclist" }, hard.map(id => {
+        const it = byId.get(id), f = fcFront(it);
+        return el("li", null,
+          el("div", { class: "bd" }, el("span", { class: "zh" }, f), " ", el("span", { class: "py", style: "color:var(--muted)" }, it.p), el("div", null, fcMeans(it).join(" / "))),
+          fcSayable(f) ? el("button", { class: "speak", "aria-label": "발음 듣기", onclick: () => say(f) }, "🔊") : null);
+      }))) : null,
+    qN ? el("button", { class: "btn", onclick: () => startWordQuiz(ids) }, `방금 본 단어로 퀴즈 · ${qN}문제`) : null,
+    hard.length ? el("button", { class: "btn ghost", onclick: () => startFlash(shuffle(hard), true) }, `어려운 것만 한 판 더 · ${hard.length}장`) : null,
+    left.due.length + left.nw.length ? el("button", { class: "btn ghost", onclick: () => startFlash(fcTodayIds()) }, `남은 오늘 카드 · ${left.due.length + left.nw.length}장`) : null,
+    el("button", { class: "btn ghost", onclick: () => WordBook() }, "단어장으로"),
+    el("button", { class: "link", onclick: Home }, "처음으로")
+  );
+  if (!s.extra && ids.length && knew.length === ids.length) setTimeout(confetti, 150);
+}
+// ---------- 단어장 퀴즈 (11/11 사용자: 단어장에서 본 단어는 퀴즈로도 풀게) ----------
+// 단어 문제만 낸다: 뜻 맞히기·간체자 고르기·간체자 쓰기(키보드 있을 때)·성조 고르기·듣고 고르기·짝 맞추기(한 세트 하나)
+// 복습 퀴즈와 따로 — 결과는 단어장(db.wb)에만: 틀리면 못 외움으로, 힌트 받고 맞히면 단계를 1로 내리고 내일 카드로 다시 나온다
+const WQ_N = 10;
+// 퀴즈로 낼 수 있는지는 autoOk 로만 본다 (autoQuestions 를 단어마다 돌리면 477개를 다 봤을 때 화면이 10초 넘게 멈췄다 — 11/11 점검)
+// 묶인 카드(点 등)는 묶음 안에서 문제를 낼 수 있는 항목 하나로 낸다
+function fcQuizItem(it) { const ok = fcGroup(it).filter(autoOk); return ok.length ? ok[rnd(ok.length)] : null; }
+function wqItems() { return FC_ITEMS.filter(it => db.wb[it.id] && fcGroup(it).some(autoOk)); }
+// 단어장 첫 화면의 퀴즈: 최근 3일 안에 본 카드, 아직 못 외운 카드, 퀴즈에서 틀린 적 있는 카드를 조금 더 자주
+function wqPick() {
+  const t = today(), w = it => db.wb[it.id];
+  const score = it => Math.random() + (daysBetween(w(it).l || w(it).f || t, t) <= 3 ? 1 : 0) + (w(it).s < 3 ? .6 : 0) + (w(it).qx ? .6 : 0);
+  return wqItems().map(it => [it, score(it)]).sort((a, b) => b[1] - a[1]).slice(0, WQ_N).map(x => x[0].id);
+}
+function wordQuizQs(items) {
+  const n = {}, out = [];
+  let matched = false;
+  for (const it of items) {
+    const qs = autoQuestions(it).concat(matched ? [] : matchQuestions(it));
+    if (!qs.length) continue;
+    // 유형이 고르게 섞이게: 이미 많이 나온 유형은 뒤로, 짝 맞추기는 한 세트에 하나
+    const score = q => Math.random() - (n[TYPE_OF(q.kind)] || 0) * 1.5 - (q.kind === "match" ? .5 : 0);
+    const q = qs.sort((a, b) => score(b) - score(a))[0];
+    n[TYPE_OF(q.kind)] = (n[TYPE_OF(q.kind)] || 0) + 1;
+    if (q.kind === "match") matched = true;
+    out.push(Object.assign({ section: "review" }, q));
+  }
+  return out;
+}
+function startWordQuiz(ids) {
+  const qs = wordQuizQs(shuffle(ids.map(id => byId.get(fcRepOf(id))).filter(Boolean).map(fcQuizItem).filter(Boolean)));
+  if (!qs.length) return alert("퀴즈로 낼 수 있는 단어가 아직 없어요. 단어장 카드를 먼저 넘겨 보세요.");
+  practiceSes = { practice: true, wq: true, date: today(), qs, idx: 0, res: [], wrong: [] };
+  Quiz(practiceSes);
+}
+function applyWordQuiz(ses, i) {
+  const q = ses.qs[i], r = ses.res[i], w = q && db.wb[fcRepOf(q.itemId)];
+  if (!w || !r || r === "skip" || r === "ok") return;
+  if (r === "miss") w.s = 0; else w.s = Math.min(w.s, 1);
+  w.d = addDays(today(), 1); w.qx = (w.qx || 0) + 1;
+  save();
+}
+function WordQuizDone(ses) {
+  practiceSes = null;
+  const cnt = { ok: 0, hint: 0, miss: 0 };
+  ses.res.forEach(r => { if (r in cnt) cnt[r]++; });
+  const answered = cnt.ok + cnt.hint + cnt.miss;
+  const wrong = [...new Set(ses.qs.filter((q, i) => ses.res[i] === "hint" || ses.res[i] === "miss").map(q => fcRepOf(q.itemId)))].filter(id => db.wb[id]);
+  mount(
+    el("div", { class: "rhead" },
+      el("h1", null, answered && cnt.ok === answered ? "전부 맞혔어요! 🎉" : "단어장 퀴즈 끝!"),
+      el("p", { class: "sub" }, `${ses.qs.length}문제`),
+      answered ? Stamp(cnt.ok, answered, today()) : null),
+    el("div", { class: "card" },
+      el("div", { class: "stat" },
+        el("div", null, el("b", { style: "color:var(--ok)" }, cnt.ok), el("span", null, "바로 맞힘")),
+        el("div", null, el("b", { style: "color:var(--warn)" }, cnt.hint), el("span", null, "힌트 후")),
+        el("div", null, el("b", { style: "color:var(--bad)" }, cnt.miss), el("span", null, "틀림"))),
+      el("p", { class: "note mt" }, wrong.length
+        ? `틀리거나 힌트를 받은 단어 ${wrong.length}개는 단어장에서 내일 카드로 다시 나와요. 복습 퀴즈 기록에는 들어가지 않아요.`
+        : "복습 퀴즈 기록에는 들어가지 않아요.")),
+    wrong.length ? el("div", { class: "card" },
+      el("p", { class: "label" }, "다시 외울 단어"),
+      el("ul", { class: "list fclist" }, wrong.map(id => {
+        const it = byId.get(id), f = fcFront(it);
+        return el("li", null,
+          el("div", { class: "bd" }, el("span", { class: "zh" }, f), " ", el("span", { class: "py", style: "color:var(--muted)" }, it.p), el("div", null, fcMeans(it).join(" / "))),
+          fcSayable(f) ? el("button", { class: "speak", "aria-label": "발음 듣기", onclick: () => say(f) }, "🔊") : null);
+      }))) : null,
+    wrong.length ? el("button", { class: "btn", onclick: () => startFlash(shuffle(wrong), true) }, `틀린 단어 카드로 한 번 더 · ${wrong.length}장`) : null,
+    el("button", { class: "btn ghost", onclick: () => WordBook() }, "단어장으로"),
+    el("button", { class: "link", onclick: Home }, "처음으로")
+  );
+  if (answered && cnt.ok === answered) setTimeout(confetti, 150);
+}
+
+function fcTodayIds() { const t = fcToday(); return shuffle(t.due).concat(t.nw).map(it => it.id); }
+// 오늘 몫을 넘긴 밀린 카드 — 오래 밀린 것부터 20장
+function fcRestIds() {
+  const t = today(), w = id => db.wb[id];
+  return FC_ITEMS.filter(it => w(it.id) && w(it.id).d <= t && w(it.id).l !== t)
+    .sort((a, b) => w(a.id).d.localeCompare(w(b.id).d) || w(a.id).s - w(b.id).s).slice(0, 20).map(it => it.id);
+}
+function WordBook() {
+  const c = fcCounts(), t = fcToday(), n = t.due.length + t.nw.length;
+  const unseen = FC_ITEMS.filter(it => !db.wb[it.id]), wqN = wqItems().length;
+  mount(
+    el("div", { class: "top" },
+      el("button", { class: "back", "aria-label": "처음 화면으로", onclick: Home }, "←"),
+      el("h1", { style: "margin:0" }, "단어장")),
+    el("p", { class: "sub" }, "카드를 넘기며 단어를 외워요. 복습 퀴즈와는 따로 기록돼요."),
+    el("div", { class: "card" },
+      n ? [el("p", { class: "label" }, "오늘 외울 카드"),
+           el("p", { class: "prompt", style: "margin:0 0 2px" }, `${n}장`),
+           el("p", { class: "note", style: "margin:0 0 14px;color:var(--muted)" },
+             [t.due.length ? `다시 볼 카드 ${t.due.length}장` : "", t.nw.length ? `새 카드 ${t.nw.length}장` + (t.nw[0] && t.nw[0].d ? ` (${koDate(t.nw[0].d).replace(/^\d+년 /, "").replace(/ \(.\)/, "")}에 배운 것부터)` : "") : ""].filter(Boolean).join(" · ")),
+           el("button", { class: "btn", onclick: () => startFlash(fcTodayIds()) }, "카드 시작")]
+        : [el("p", { class: "prompt", style: "margin:0 0 2px" }, "오늘 카드 끝! 🎉"),
+           el("p", { class: "note", style: "margin:0 0 14px;color:var(--muted)" }, t.rest ? `오늘 몫 ${FC_DAY}장을 다 봤어요. 밀린 카드가 ${t.rest}장 있어요 — 여유 있을 때만 더 보세요.` : unseen.length ? "더 외우고 싶으면 새 카드를 더 볼 수 있어요." : "모든 단어를 한 번씩 봤어요. 다시 볼 날이 되면 카드가 나와요."),
+           t.rest ? el("button", { class: "btn ghost", onclick: () => startFlash(fcRestIds()) }, `밀린 카드 ${Math.min(20, t.rest)}장 더 보기`) : null,
+           unseen.length ? el("button", { class: "btn ghost", onclick: () => startFlash(unseen.slice(0, FC_NEW).map(it => it.id)) }, `새 카드 ${Math.min(FC_NEW, unseen.length)}장 더`) : null]),
+    wqN ? el("div", { class: "card" },
+      el("p", { class: "label" }, "단어장 퀴즈"),
+      el("p", { class: "note", style: "margin:0 0 14px;color:var(--muted)" }, `단어장에서 본 단어 ${wqN}개로 문제를 풀어요. 뜻·간체자·성조·듣기 문제가 섞여 나와요. 틀린 단어는 내일 카드로 다시 나와요.`),
+      el("button", { class: "btn ghost", onclick: () => startWordQuiz(wqPick()) }, `퀴즈 풀기 · ${Math.min(WQ_N, wqN)}문제`)) : null,
+    el("div", { class: "card" },
+      el("div", { class: "stat four" },
+        el("div", null, el("b", { style: "color:var(--ok)" }, c.done), el("span", null, "외움")),
+        el("div", null, el("b", { style: "color:var(--warn)" }, c.mid), el("span", null, "외우는 중")),
+        el("div", null, el("b", { style: "color:var(--bad)" }, c.low), el("span", null, "못 외움")),
+        el("div", null, el("b", { style: "color:var(--muted)" }, c.none), el("span", null, "안 봄"))),
+      el("p", { class: "note mt", style: "color:var(--muted)" },
+        `카드를 볼 때마다 '알아요'를 누르면 한 단계씩 올라가고, 세 번이면 외움이 돼요. 몰라요·헷갈려요를 누른 카드는 내일 다시 나와요. 하루 ${FC_DAY}장까지 — 다시 볼 카드가 먼저고, 남는 자리에 새 카드가 최대 ${FC_NEW}장(최근에 배운 단어부터) 들어가요.`))
+  );
 }
 
 // 시작할 때 저장된 세션 정리: 형식이 바뀐 옛 세션, 다 풀고 결과를 안 본 세션은 푼 것만 기록해 둔다
