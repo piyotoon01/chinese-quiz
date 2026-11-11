@@ -1627,8 +1627,11 @@ function WordTile() {
   const seen = total - c.none, wqN = seen ? wqItems().length : 0;
   return el("div", { class: "card wbcard" },
     el("p", { class: "t" }, n ? `🃏 오늘 외울 카드 ${n}장` : "🃏 오늘 카드 끝! 🎉"),
-    el("p", { class: "s" }, !seen ? "최근에 배운 단어부터 카드로 외워요" : `외운 단어 ${c.done} / ${total}` + (c.low ? ` · 못 외움 ${c.low}` : "")),
-    seen ? el("div", { class: "pbar" }, el("i", { style: `width:${Math.round(c.done / total * 100)}%` })) : null,
+    // 11/11 사용자: '외움'(날 바꿔 알아요 세 번)은 일주일 동안 0이라 고장처럼 보이고, 단계 넷을 다 보여 주면 더 헷갈린다
+    // → 단계는 다시 보여 줄 날을 정하는 데만 쓰고, 화면에는 카드 넘긴 만큼 바로 늘어나는 '본 단어' 하나만
+    el("p", { class: "s" }, seen ? `본 단어 ${seen} / ${total}` : "최근에 배운 단어부터 카드로 외워요"),
+    seen ? el("div", { class: "pbar", role: "img", "aria-label": `${total}개 중 ${seen}개 봄` },
+      el("i", { style: `width:${Math.round(seen / total * 100)}%` })) : null,
     n ? el("button", { class: "btn wb", onclick: () => startFlash(fcTodayIds()) }, "카드 시작")
       : el("button", { class: "btn ghost", onclick: () => WordBook() }, "단어장 열기"),
     el("div", { class: "wblinks" },
@@ -2556,7 +2559,7 @@ function Flash() {
   const front = fcFront(it);
   // 네 글자 넘는 표현·문장은 田자 칸 대신 문장 글씨로 (칸 안에서 줄이 꺾이면 읽기 어렵다)
   const face = () => hanOf(front).length > 4 ? el("div", { class: "sentence fsent" }, front) : el("div", { class: "big-zh" }, front);
-  const tag = s.extra ? "한 판 더" : !w ? "새 카드" : w.s === 0 ? "못 외운 카드" : "다시 보기";
+  const tag = s.extra ? "한 판 더" : !w ? "새 카드" : w.s === 0 ? "어려운 카드" : "다시 보기";
   const top = el("div", { class: "top" },
     el("button", { class: "back", "aria-label": "단어장으로", onclick: () => { fcSes = null; WordBook(); } }, "←"),
     el("div", { class: "pbar wbp", style: "flex:1;margin:0;height:14px" }, el("i", { style: `width:${Math.round(s.done / s.total * 100)}%` })),
@@ -2720,7 +2723,9 @@ function fcRestIds() {
 }
 function WordBook() {
   const c = fcCounts(), t = fcToday(), n = t.due.length + t.nw.length;
-  const unseen = FC_ITEMS.filter(it => !db.wb[it.id]), wqN = wqItems().length;
+  const unseen = FC_ITEMS.filter(it => !db.wb[it.id]), wqN = wqItems().length, total = FC_ITEMS.length;
+  // '어려운 것만 보기'는 연습 판 — 단계·날짜는 안 바꾼다 (원래 내일 다시 나올 카드라서)
+  const hardIds = FC_ITEMS.filter(it => db.wb[it.id] && db.wb[it.id].s === 0).map(it => it.id);
   mount(
     el("div", { class: "top" },
       el("button", { class: "back", "aria-label": "처음 화면으로", onclick: Home }, "←"),
@@ -2740,14 +2745,14 @@ function WordBook() {
       el("p", { class: "label" }, "단어장 퀴즈"),
       el("p", { class: "note", style: "margin:0 0 14px;color:var(--muted)" }, `단어장에서 본 단어 ${wqN}개로 문제를 풀어요. 뜻·간체자·성조·듣기 문제가 섞여 나와요. 틀린 단어는 내일 카드로 다시 나와요.`),
       el("button", { class: "btn ghost", onclick: () => startWordQuiz(wqPick()) }, `퀴즈 풀기 · ${Math.min(WQ_N, wqN)}문제`)) : null,
+    // 11/11 사용자: 단계 이름(외움·외우는 중…)은 빼고 '본 단어'와 '어려운 단어'(몰라요를 눌렀거나 퀴즈에서 틀려 처음 단계인 카드)만
     el("div", { class: "card" },
-      el("div", { class: "stat four" },
-        el("div", null, el("b", { style: "color:var(--ok)" }, c.done), el("span", null, "외움")),
-        el("div", null, el("b", { style: "color:var(--warn)" }, c.mid), el("span", null, "외우는 중")),
-        el("div", null, el("b", { style: "color:var(--bad)" }, c.low), el("span", null, "못 외움")),
-        el("div", null, el("b", { style: "color:var(--muted)" }, c.none), el("span", null, "안 봄"))),
+      el("div", { class: "stat" },
+        el("div", null, el("b", { style: "color:var(--wb)" }, total - c.none), el("span", null, `본 단어 / ${total}`)),
+        el("div", null, el("b", { style: `color:${c.low ? "var(--bad)" : "var(--muted)"}` }, c.low), el("span", null, "어려운 단어"))),
+      c.low ? el("button", { class: "btn ghost mt", onclick: () => startFlash(shuffle(hardIds), true) }, `어려운 것만 보기 · ${c.low}장`) : null,
       el("p", { class: "note mt", style: "color:var(--muted)" },
-        `카드를 볼 때마다 '알아요'를 누르면 한 단계씩 올라가고, 세 번이면 외움이 돼요. 몰라요·헷갈려요를 누른 카드는 내일 다시 나와요. 하루 ${FC_DAY}장까지 — 다시 볼 카드가 먼저고, 남는 자리에 새 카드가 최대 ${FC_NEW}장(최근에 배운 단어부터) 들어가요.`))
+        `알아요를 누른 카드는 2일 → 5일 → 2주로 점점 뜸하게 다시 나와요. 몰라요·헷갈려요는 내일 다시 나와요. 하루 ${FC_DAY}장까지 — 다시 볼 카드가 먼저고, 남는 자리에 새 카드가 최대 ${FC_NEW}장(최근에 배운 단어부터) 들어가요.`))
   );
 }
 
