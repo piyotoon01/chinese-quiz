@@ -40,6 +40,7 @@
   --chip: #eef1f5;
   --seal: #b8432f; /* 도장 인주색 */
   --tag-bg: #f9ead9; --tag-ink: #b06318; /* 말하기 연습·연속 정답 표시 */
+  --wb: #2c6a70; --wb-deep: #1f4d52; --wb-line: rgba(44, 106, 112, .35); /* 단어장 (복습 퀴즈와 따로 도는 구역) */
   --fs: 17px;
   --zh: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
   --round: "Nunito", "Noto Sans KR", sans-serif; /* 제목·숫자·버튼: 둥근 숫자 */
@@ -52,6 +53,7 @@
     --accent: #8fa9d8; --accent-deep: #5d79a8; --accent-ink: #121620; --accent-soft: #253049; --accent-line: rgba(143, 169, 216, .3);
     --ok: #7fbf98; --ok-deep: #5c9a75; --ok-soft: #1d3027; --warn: #d8b25c; --warn-deep: #b08b3b; --warn-soft: #362e1b;
     --bad: #e38f80; --bad-deep: #b86d5f; --bad-soft: #3a2420; --chip: #252a33; --seal: #e2806b; --tag-bg: #3a2a1a; --tag-ink: #e0a15c;
+    --wb: #7fc1c6; --wb-deep: #5a9a9f; --wb-line: rgba(127, 193, 198, .35);
   }
 }
 :root[data-theme="dark"] {
@@ -59,6 +61,7 @@
   --accent: #8fa9d8; --accent-deep: #5d79a8; --accent-ink: #121620; --accent-soft: #253049; --accent-line: rgba(143, 169, 216, .3);
   --ok: #7fbf98; --ok-deep: #5c9a75; --ok-soft: #1d3027; --warn: #d8b25c; --warn-deep: #b08b3b; --warn-soft: #362e1b;
   --bad: #e38f80; --bad-deep: #b86d5f; --bad-soft: #3a2420; --chip: #252a33; --seal: #e2806b; --tag-bg: #3a2a1a; --tag-ink: #e0a15c;
+    --wb: #7fc1c6; --wb-deep: #5a9a9f; --wb-line: rgba(127, 193, 198, .35);
 }
 :root.big { --fs: 20px; }
 * { box-sizing: border-box; }
@@ -133,6 +136,20 @@ button.mini:disabled { cursor: default; }
 button.mini:disabled .mi { filter: grayscale(1); opacity: .5; }
 .pbar { width: 100%; height: 10px; border-radius: 99px; background: var(--chip); overflow: hidden; margin-top: 8px; }
 .pbar i { display: block; height: 100%; border-radius: 99px; background: var(--ok); min-width: 10px; }
+/* 첫 화면 두 구역 (11/11): 복습 퀴즈(오답 노트·주간 리포트와 한 기록) / 단어장(따로 기록) */
+.hsec { display: flex; align-items: baseline; gap: 8px; margin: 22px 4px 10px; font-family: var(--round); font-weight: 900; font-size: 1em; color: var(--accent); }
+.hsec.first { margin-top: 4px; }
+.hsec::before { content: ""; align-self: center; width: 10px; height: 10px; border-radius: 50%; background: currentColor; flex: none; }
+.hsec small { font-family: "Noto Sans KR", sans-serif; font-weight: 500; font-size: .78em; color: var(--muted); }
+.hsec.wbs { color: var(--wb); }
+.wbcard { border-color: var(--wb-line); }
+.wbcard .t { font-family: var(--round); font-size: 1.25em; font-weight: 900; margin: 0; line-height: 1.4; }
+.wbcard .s { color: var(--muted); font-weight: 500; margin: 2px 0 10px; }
+.wbcard .pbar { margin: 0 0 16px; }
+.wbcard .pbar i, .pbar.wbp i { background: var(--wb); }
+.wblinks { display: flex; gap: 8px; }
+.wblinks .link { flex: 1; }
+.btn.wb { background: var(--wb); box-shadow: 0 4px 0 var(--wb-deep); }
 
 /* 문제 화면 */
 .top { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
@@ -1520,15 +1537,16 @@ function Home() {
     Quiz();
   };
   const notes = noteItems(), openN = notes.length, againN = notes.filter(it => (db.notes[it.id].r || 1) >= 2).length;
-  const fc = fcCounts(), fcT = fcToday(), fcN = fcT.due.length + fcT.nw.length; // 단어장 (복습 퀴즈와 따로)
   const shortDay = d => koDate(d).replace(/^\d+년 /, "").replace(/ \(.\)/, "");
-  // 첫 화면: ① 이번 주 도장 ② 오늘 할 공부 한 줄 + 시작 버튼 ③ 오답 노트·익힌 단어. 설정·백업은 ⚙ 화면으로
+  // 첫 화면 (11/11 두 구역으로): 「복습 퀴즈」 도장·오늘 공부 + 오답 노트·주간 리포트(셋이 한 기록) / 「단어장」 카드 하나(따로 기록). 설정·백업은 ⚙ 화면으로
   mount(
     el("div", { class: "hhead" },
       el("div", null, el("h1", null, "중국어 복습"), el("p", { class: "sub" }, koDate(today()).replace(/^\d+년 /, ""))),
       el("button", { class: "icon", "aria-label": "설정", onclick: Settings }, Icon("gear"))),
     STORAGE_OK ? null : el("div", { class: "feedback bad", style: "margin:0 0 14px" },
       el("p", { class: "note", style: "margin:0" }, "이 브라우저에서는 기록이 저장되지 않아요. 사생활 보호(시크릿) 모드나 카카오톡 안 브라우저라면, Safari·Chrome에서 직접 열어 주세요.")),
+    InstallCard(),
+    el("p", { class: "hsec first" }, "복습 퀴즈"),
     el("div", { class: "card" },
       StreakRow(),
       el("div", { class: "plan" },
@@ -1549,7 +1567,6 @@ function Home() {
       )
     ),
     // 오답이 20개쯤 모이면 오답 퀴즈를 권한다
-    InstallCard(),
     openN >= NOTE_GOAL ? el("div", { class: "card nudge" },
       el("p", { class: "t" }, `📒 오답이 ${openN}개 모였어요`),
       el("p", { class: "s" }, "오답 퀴즈로 한 번 정리해요. 맞히면 노트에서 풀리고, 또 틀리면 2차 오답으로 남아요."),
@@ -1559,12 +1576,10 @@ function Home() {
         el("span", { class: "mi" }, "📒"), el("b", null, "오답 노트"),
         el("small", null, openN ? `${openN} / ${NOTE_GOAL}개` + (againN ? ` · 2차 ${againN}` : "") : "틀린 단어가 없어요"),
         openN ? el("div", { class: "pbar" }, el("i", { style: `width:${Math.min(100, Math.round(openN / NOTE_GOAL * 100))}%` })) : null),
-      el("button", { class: "card mini", onclick: () => WordBook() },
-        el("span", { class: "mi" }, "🃏"), el("b", null, "단어장"),
-        el("small", null, fcN ? `오늘 카드 ${fcN}장` + (fc.done ? ` · 외움 ${fc.done}` : "") : `외운 단어 ${fc.done} / ${FC_ITEMS.length}`),
-        el("div", { class: "pbar" }, el("i", { style: `width:${Math.round(fc.done / Math.max(1, FC_ITEMS.length) * 100)}%` })))
+      ReportTile()
     ),
-    ReportTile(),
+    el("p", { class: "hsec wbs" }, "단어장", el("small", null, "복습 퀴즈와 따로 기록돼요")),
+    WordTile(),
     BackupNag(),
     el("p", { class: "foot" }, `만든 사람 · ${MAKER} · © ${COPY_YEAR}`)
   );
@@ -1600,9 +1615,25 @@ function ReportTile() {
   const sub = s.studied
     ? `이번 주 ${s.studied}일 공부` + (s.n ? ` · 바로 맞힘 ${pct(s.ok, s.n)}%` : "")
     : "이번 주 공부 기록을 모아 보여 줘요";
-  return el("button", { class: "card mini wide", onclick: () => Report(0) },
-    el("span", { class: "mi" }, "📊"),
-    el("div", null, el("b", null, "주간 리포트"), el("small", { style: "display:block" }, sub)));
+  return el("button", { class: "card mini", onclick: () => Report(0) },
+    el("span", { class: "mi" }, "📊"), el("b", null, "주간 리포트"),
+    // 반쪽 칸이라 '이번 주 N일 공부' / '바로 맞힘 N%' 를 두 줄로 (한 줄로 두면 단어 중간에서 꺾인다)
+    s.studied ? el("small", null, `이번 주 ${s.studied}일 공부`, s.n ? el("span", { style: "display:block" }, `바로 맞힘 ${pct(s.ok, s.n)}%`) : null) : el("small", null, sub),
+    s.studied ? el("div", { class: "pbar" }, el("i", { style: `background:var(--accent);width:${Math.round(Math.min(7, s.studied) / 7 * 100)}%` })) : null);
+}
+// 첫 화면 단어장 칸: 오늘 카드 수를 크게, 바로 시작 버튼 (한 번 더 들어가지 않게)
+function WordTile() {
+  const c = fcCounts(), t = fcToday(), n = t.due.length + t.nw.length, total = FC_ITEMS.length;
+  const seen = total - c.none, wqN = seen ? wqItems().length : 0;
+  return el("div", { class: "card wbcard" },
+    el("p", { class: "t" }, n ? `🃏 오늘 외울 카드 ${n}장` : "🃏 오늘 카드 끝! 🎉"),
+    el("p", { class: "s" }, !seen ? "최근에 배운 단어부터 카드로 외워요" : `외운 단어 ${c.done} / ${total}` + (c.low ? ` · 못 외움 ${c.low}` : "")),
+    seen ? el("div", { class: "pbar" }, el("i", { style: `width:${Math.round(c.done / total * 100)}%` })) : null,
+    n ? el("button", { class: "btn wb", onclick: () => startFlash(fcTodayIds()) }, "카드 시작")
+      : el("button", { class: "btn ghost", onclick: () => WordBook() }, "단어장 열기"),
+    el("div", { class: "wblinks" },
+      n ? el("button", { class: "link", onclick: () => WordBook() }, "단어장 열기") : null,
+      wqN ? el("button", { class: "link", onclick: () => startWordQuiz(wqPick()) }, `단어장 퀴즈 · ${Math.min(WQ_N, wqN)}문제`) : null));
 }
 function Report(off) {
   const days = weekDays(off), s = weekSum(days), p = weekSum(weekDays(off - 1));
@@ -2446,7 +2477,7 @@ let fcSes = null;
 // q 남은 카드 순서, first 이번 판에서 처음 누른 답(0 몰라요·1 헷갈려요·2 알아요), extra 연습 판(단계·날짜 안 바꿈)
 function newFlash(ids, extra) {
   if (!ids.length) return false;
-  fcSes = { q: ids.slice(), first: {}, total: ids.length, done: 0, flip: false, extra: !!extra };
+  fcSes = { q: ids.slice(), first: {}, total: ids.length, done: 0, flip: false, extra: !!extra, hist: [] };
   return true;
 }
 function startFlash(ids, extra) { if (newFlash(ids, extra)) Flash(); else WordBook(); }
@@ -2460,13 +2491,29 @@ function fcRecord(id, r) {
   db.wb[id] = w; save();
 }
 function fcRate(r) {
-  const s = fcSes, id = s.q.shift();
+  const s = fcSes, id = s.q[0];
+  // 전 단어로 돌아가기용: 누르기 전 상태(카드 순서·이 카드 기록·오늘 새 카드 수)를 남겨 둔다
+  s.hist.push({ id, q: s.q.slice(), done: s.done, had: id in s.first,
+    w: db.wb[id] ? Object.assign({}, db.wb[id]) : null, wn: db.wbNew ? Object.assign({}, db.wbNew) : null });
+  s.q.shift();
   // 기록은 이번 판에서 처음 누른 답으로만 — 몰라요 뒤에 판 안에서 다시 보고 '알아요'를 눌러도 내일 또 나온다
   if (!(id in s.first)) { s.first[id] = r; if (!s.extra) fcRecord(id, r); }
   if (r < 2) s.q.splice(Math.min(s.q.length, r === 0 ? 3 : 6), 0, id); // 몰라요는 3장 뒤, 헷갈려요는 6장 뒤에 다시
   else s.done++;
   s.flip = false;
   if (s.q.length) Flash(); else FlashDone();
+}
+// 전 단어로 돌아가기 (11/11 사용자 요청): 바로 앞 카드를 뒷면으로 다시 보여 주고, 그 카드에 누른 답을 없던 일로 — 잘못 눌렀으면 다시 고를 수 있다
+function fcUndo() {
+  const s = fcSes, h = s && s.hist.pop();
+  if (!h) return;
+  s.q = h.q; s.done = h.done;
+  if (!h.had) {
+    delete s.first[h.id];
+    if (!s.extra) { if (h.w) db.wb[h.id] = h.w; else delete db.wb[h.id]; db.wbNew = h.wn; save(); }
+  }
+  s.flip = true;
+  Flash();
 }
 // 예문 한 줄 — 글자 위 병음, 이 단어 글자는 밑줄
 // 밑줄 자리: 이 단어가 더 긴 단어 속에 든 자리(晚 카드인데 晚上)는 건너뛰고 따로 쓰인 자리를 찾는다. 없으면 처음 나온 자리
@@ -2512,16 +2559,18 @@ function Flash() {
   const tag = s.extra ? "한 판 더" : !w ? "새 카드" : w.s === 0 ? "못 외운 카드" : "다시 보기";
   const top = el("div", { class: "top" },
     el("button", { class: "back", "aria-label": "단어장으로", onclick: () => { fcSes = null; WordBook(); } }, "←"),
-    el("div", { class: "pbar", style: "flex:1;margin:0;height:14px" }, el("i", { style: `width:${Math.round(s.done / s.total * 100)}%` })),
+    el("div", { class: "pbar wbp", style: "flex:1;margin:0;height:14px" }, el("i", { style: `width:${Math.round(s.done / s.total * 100)}%` })),
     el("span", { class: "count" }, `${s.done} / ${s.total}`));
-  const flip = () => { if (s.flip) return; s.flip = true; Flash(); };
+  const back = s.hist.length ? el("button", { class: "link prevq", onclick: fcUndo }, "‹ 전 단어로 돌아가기") : null;
+  const flip =() => { if (s.flip) return; s.flip = true; Flash(); };
   if (!s.flip) {
     mount(top,
       el("div", { class: "card fcard", role: "button", tabindex: "0", "aria-label": "카드 뒤집기", onclick: flip },
         el("span", { class: "qlabel" }, tag),
         face(),
         el("p", { class: "tap" }, fcMeans(it).length > 1 ? `뜻이 ${fcMeans(it).length}가지예요 — 모두 떠올려 보세요` : "뜻이 떠오르면 눌러서 확인해요")),
-      el("button", { class: "btn", onclick: flip }, "뜻 보기"));
+      el("button", { class: "btn wb", onclick: flip }, "뜻 보기"),
+      back);
     return;
   }
   const grp = fcGroup(it), means = fcMeans(it);
@@ -2546,7 +2595,9 @@ function Flash() {
     el("div", { class: "rate" },
       rate(0, "no", "몰라요", "곧 다시"),
       rate(1, "so", "헷갈려요", "조금 뒤 다시"),
-      rate(2, "yes", "알아요", s.extra ? "넘어가기" : "한 단계 ↑")));
+      rate(2, "yes", "알아요", s.extra ? "넘어가기" : "한 단계 ↑")),
+    // 뒷면에서는 한 걸음 뒤 = 앞면 (병음·뜻 가리고 다시 떠올리기, 11/11 사용자 요청). 앞면에서 또 누르면 전 단어로
+    el("button", { class: "link prevq", onclick: () => { s.flip = false; Flash(); } }, "‹ 앞면으로 돌아가기"));
 }
 function FlashDone() {
   const s = fcSes, ids = Object.keys(s.first);
@@ -2566,6 +2617,8 @@ function FlashDone() {
       el("p", { class: "note mt" }, s.extra ? "연습 판은 외움 단계에 들어가지 않아요."
         : hard.length ? "다시 본 카드는 내일 또 나와요. 알아요를 누른 카드는 며칠 뒤에 한 번 더 확인해요."
         : "알아요를 누른 카드는 며칠 뒤에 한 번 더 확인해요.")),
+    // 마지막 카드에서 잘못 눌렀을 때도 되돌릴 수 있게
+    s.hist.length ? el("button", { class: "link", style: "margin:-6px 0 10px", onclick: () => { fcSes = s; fcUndo(); } }, "‹ 마지막 단어로 돌아가기") : null,
     hard.length ? el("div", { class: "card" },
       el("p", { class: "label" }, "어려웠던 단어"),
       el("ul", { class: "list fclist" }, hard.map(id => {
@@ -2574,7 +2627,7 @@ function FlashDone() {
           el("div", { class: "bd" }, el("span", { class: "zh" }, f), " ", el("span", { class: "py", style: "color:var(--muted)" }, it.p), el("div", null, fcMeans(it).join(" / "))),
           fcSayable(f) ? el("button", { class: "speak", "aria-label": "발음 듣기", onclick: () => say(f) }, "🔊") : null);
       }))) : null,
-    qN ? el("button", { class: "btn", onclick: () => startWordQuiz(ids) }, `방금 본 단어로 퀴즈 · ${qN}문제`) : null,
+    qN ? el("button", { class: "btn wb", onclick: () => startWordQuiz(ids) }, `방금 본 단어로 퀴즈 · ${qN}문제`) : null,
     hard.length ? el("button", { class: "btn ghost", onclick: () => startFlash(shuffle(hard), true) }, `어려운 것만 한 판 더 · ${hard.length}장`) : null,
     left.due.length + left.nw.length ? el("button", { class: "btn ghost", onclick: () => startFlash(fcTodayIds()) }, `남은 오늘 카드 · ${left.due.length + left.nw.length}장`) : null,
     el("button", { class: "btn ghost", onclick: () => WordBook() }, "단어장으로"),
@@ -2651,7 +2704,7 @@ function WordQuizDone(ses) {
           el("div", { class: "bd" }, el("span", { class: "zh" }, f), " ", el("span", { class: "py", style: "color:var(--muted)" }, it.p), el("div", null, fcMeans(it).join(" / "))),
           fcSayable(f) ? el("button", { class: "speak", "aria-label": "발음 듣기", onclick: () => say(f) }, "🔊") : null);
       }))) : null,
-    wrong.length ? el("button", { class: "btn", onclick: () => startFlash(shuffle(wrong), true) }, `틀린 단어 카드로 한 번 더 · ${wrong.length}장`) : null,
+    wrong.length ? el("button", { class: "btn wb", onclick: () => startFlash(shuffle(wrong), true) }, `틀린 단어 카드로 한 번 더 · ${wrong.length}장`) : null,
     el("button", { class: "btn ghost", onclick: () => WordBook() }, "단어장으로"),
     el("button", { class: "link", onclick: Home }, "처음으로")
   );
@@ -2678,7 +2731,7 @@ function WordBook() {
            el("p", { class: "prompt", style: "margin:0 0 2px" }, `${n}장`),
            el("p", { class: "note", style: "margin:0 0 14px;color:var(--muted)" },
              [t.due.length ? `다시 볼 카드 ${t.due.length}장` : "", t.nw.length ? `새 카드 ${t.nw.length}장` + (t.nw[0] && t.nw[0].d ? ` (${koDate(t.nw[0].d).replace(/^\d+년 /, "").replace(/ \(.\)/, "")}에 배운 것부터)` : "") : ""].filter(Boolean).join(" · ")),
-           el("button", { class: "btn", onclick: () => startFlash(fcTodayIds()) }, "카드 시작")]
+           el("button", { class: "btn wb", onclick: () => startFlash(fcTodayIds()) }, "카드 시작")]
         : [el("p", { class: "prompt", style: "margin:0 0 2px" }, "오늘 카드 끝! 🎉"),
            el("p", { class: "note", style: "margin:0 0 14px;color:var(--muted)" }, t.rest ? `오늘 몫 ${FC_DAY}장을 다 봤어요. 밀린 카드가 ${t.rest}장 있어요 — 여유 있을 때만 더 보세요.` : unseen.length ? "더 외우고 싶으면 새 카드를 더 볼 수 있어요." : "모든 단어를 한 번씩 봤어요. 다시 볼 날이 되면 카드가 나와요."),
            t.rest ? el("button", { class: "btn ghost", onclick: () => startFlash(fcRestIds()) }, `밀린 카드 ${Math.min(20, t.rest)}장 더 보기`) : null,
