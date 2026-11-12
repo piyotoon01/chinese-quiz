@@ -428,10 +428,10 @@ input.answer:focus { outline: none; border-color: var(--accent); }
 </head>
 <body>
 <div class="wrap" id="app"></div>
-<script src="data/items.js?v=202611091320"></script>
-<script src="data/questions.js?v=202611091320"></script>
-<script src="data/near.js?v=202611091320"></script>
-<script src="data/dialogs.js?v=202611091320"></script>
+<script src="data/items.js?v=202611120120"></script>
+<script src="data/questions.js?v=202611120120"></script>
+<script src="data/near.js?v=202611120120"></script>
+<script src="data/dialogs.js?v=202611120120"></script>
 <script>
 "use strict";
 (() => {
@@ -1168,7 +1168,11 @@ function assignQuestions(items) {
   const tileCap = 1; // 카드 문제는 말하기에 2개가 따로 있으니 복습에서는 1개까지
   const NEW_KINDS = ["sentence_mc", "listen", "cloze_mc", "match", "find_error", "dialog"]; // 새로 넣은 유형은 한 세트에 1~2개씩 섞이게
   // 손으로 쓴 문제가 있는 항목부터 정해야 상황형 몫이 단어 문제에 밀리지 않는다
-  const order = items.map((it, i) => i).sort((a, b) => authoredFor(items[b]).length - authoredFor(items[a]).length);
+  // 11/12: 문제가 전부 한 문장뿐인 항목(你的手机号码是多少？ 같은 표현)을 가장 먼저 정한다 — 그 문장을 예문으로 쓰는 다른 항목(号码)이
+  // 나중에 단어 문제로 비켜 갈 수 있게 (반대 순서면 비켜 갈 곳이 없어 한 세트에 같은 문장이 두 번 나왔다)
+  const oneSent = it => { const ks = new Set(questionsFor(it).map(sentKey)); return ks.size === 1 && !!ks.values().next().value ? 1 : 0; };
+  const one = items.map(oneSent);
+  const order = items.map((it, i) => i).sort((a, b) => one[b] - one[a] || authoredFor(items[b]).length - authoredFor(items[a]).length);
   const out = [], setKeys = [];
   for (const i of order) {
     const it = items[i];
