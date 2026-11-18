@@ -428,10 +428,10 @@ input.answer:focus { outline: none; border-color: var(--accent); }
 </head>
 <body>
 <div class="wrap" id="app"></div>
-<script src="data/items.js?v=202611160656"></script>
-<script src="data/questions.js?v=202611160656"></script>
-<script src="data/near.js?v=202611160656"></script>
-<script src="data/dialogs.js?v=202611160656"></script>
+<script src="data/items.js?v=202611181235"></script>
+<script src="data/questions.js?v=202611181235"></script>
+<script src="data/near.js?v=202611181235"></script>
+<script src="data/dialogs.js?v=202611181235"></script>
 <script>
 "use strict";
 (() => {
@@ -978,7 +978,10 @@ function listenWord(it) {
   const same = pool.filter(o => ZH_ONLY(o.h).length === len);
   const initOf = p => (plain(p).replace(/\s/g, "").match(/^(zh|ch|sh|[a-z])/) || [""])[0];
   const finalOf = p => plain(p).replace(/\s/g, "").slice(-2);
-  const ranked = shuffle(same.length >= 12 ? same : pool)
+  // 11/18 신고: 긴 문장(你的手机号码是多少？)은 같은 글자 수가 모자라 你好·您好 같은 짧은 말이 보기로 나와 바로 고름
+  // → 같은 글자 수가 12개 미만이면 글자 수가 가장 가까운 12개 안에서 고른다
+  const close = shuffle(pool).sort((a, b) => Math.abs(ZH_ONLY(a.h).length - len) - Math.abs(ZH_ONLY(b.h).length - len)).slice(0, 12);
+  const ranked = shuffle(same.length >= 12 ? same : close)
     .map(o => {
       let s = Math.random();
       if (plain(o.p).replace(/\s/g, "") === myPlain) s += 4;      // 성조만 다른 단어 (妈/麻/马)
