@@ -1157,7 +1157,22 @@ function sameSent(a, b) {
   const [s, l] = a.length <= b.length ? [a, b] : [b, a];
   return s.length >= 4 && l.includes(s);
 }
-function seenInSet(keys, q) { const k = sentKey(q); return !!k && keys.some(x => sameSent(x, k)); }
+// 11/19 사용자: 그래도 한 세트에 같은 문장이 다른 유형으로 또 나옴 → 문제 하나에 보이는 문장을 전부 본다
+// (빈칸 문제의 완성 문장·카드 문제의 다른 정답·대화의 모든 줄·듣기 문장), 문장부호·화자 표시(A: B:)는 떼고 비교한다.
+// 'A: 我走了。 B: 走好！'처럼 여러 문장이 든 것은 문장마다(3글자 이상) 따로도 본다. sentKey 는 기기 기록(db.shown)용이라 그대로 둔다
+const ZH_BARE = s => String(s || "").replace(/[^一-鿿]/g, "");
+function sentKeys(q) {
+  const src = [q.sentence, q.showH && ZH_ONLY(q.showH).length > 3 ? q.showH : "", q.full && q.full.h, q.listen]
+    .concat((q.alts || []).map(a => a && a.h), ((q.dlg && q.dlg.lines) || []).map(l => l && l.h));
+  const out = new Set();
+  for (const raw of src) {
+    if (!raw) continue;
+    const whole = ZH_BARE(raw); if (whole) out.add(whole);
+    for (const seg of String(raw).split(/[。？！?!…—]|[AB]\s*[:：]/)) { const k = ZH_BARE(seg); if (k.length >= 3) out.add(k); }
+  }
+  return [...out];
+}
+function seenInSet(keys, q) { return sentKeys(q).some(k => keys.some(x => sameSent(x, k))); }
 function staleness(q) {
   const last = (db.shown || {})[sentKey(q)];
   if (!last) return 1.2;                // 이 기기에서 처음 보는 문장
@@ -1200,7 +1215,7 @@ function assignQuestions(items) {
     };
     const q = qs.slice().sort((a, b) => score(b) - score(a))[0];
     typeN[TYPE_OF(q.kind)] = (typeN[TYPE_OF(q.kind)] || 0) + 1;
-    if (sentKey(q)) setKeys.push(sentKey(q));
+    setKeys.push(...sentKeys(q));
     if (IS_TILE(q.kind)) tiles++;
     if (IS_MC(q.kind)) mc++; else build++;
     if (q.kind === "situation" || q.kind === "translate") situ++;
@@ -1218,17 +1233,17 @@ function pickSpeak(n, reviewItems, reviewQs) {
   const recent = q => staleness(q) < -2; // 최근 일주일 안에 본 문장은 말하기에서도 뒤로
   const rank = list => shuffle(list).sort((a, b) => (used.has(a.item) - used.has(b.item)) || (recent(a) - recent(b)) || (notYet(a) - notYet(b)) || (priority(byH.get(a.item)) - priority(byH.get(b.item))));
   const nTile = Math.max(1, n - 1), tags = new Set(), tilesOut = [], sitOut = []; // 3문제면 카드 2 + 고르기 1
-  const keys = reviewQs.map(sentKey).filter(Boolean); // 복습에 나온 문장은 말하기에서도 다시 내지 않는다
+  const keys = reviewQs.flatMap(sentKeys); // 복습에 나온 문장은 말하기에서도 다시 내지 않는다
   const usedItems = new Set(); // 한 항목에 말하기 문제가 여럿(태그만 다름)이어도 한 세트에는 하나만
   for (const q of rank(AUTHORED.filter(q => q.kind === "speak" && byH.has(q.item)))) {
     if (tilesOut.length >= nTile) break;
     if (tags.has(q.tag) || usedItems.has(q.item) || seenInSet(keys, q)) continue;
-    tags.add(q.tag); usedItems.add(q.item); tilesOut.push(q); keys.push(sentKey(q));
+    tags.add(q.tag); usedItems.add(q.item); tilesOut.push(q); keys.push(...sentKeys(q));
   }
   for (const q of rank(AUTHORED.filter(q => q.kind === "situation" && byH.has(q.item) && !usedIds.has(q.id) && !usedItems.has(q.item)))) {
     if (tilesOut.length + sitOut.length >= n) break;
     if (tags.has(q.tag) || seenInSet(keys, q)) continue;
-    tags.add(q.tag); sitOut.push(q); keys.push(sentKey(q));
+    tags.add(q.tag); sitOut.push(q); keys.push(...sentKeys(q));
   }
   // 카드 문제 사이에 고르기 문제를 끼워 연달아 나오지 않게
   const out = [];
