@@ -1660,7 +1660,7 @@ function WordTile() {
       : el("button", { class: "btn ghost", onclick: () => WordBook() }, "단어장 열기"),
     el("div", { class: "wblinks" },
       n ? el("button", { class: "link", onclick: () => WordBook() }, "단어장 열기") : null,
-      wqN ? el("button", { class: "link", onclick: () => startWordQuiz(wqPick()) }, `단어장 퀴즈 · ${Math.min(WQ_N, wqN)}문제`) : null));
+      wqN ? el("button", { class: "link", onclick: () => startWordQuiz(wqPick()) }, `단어장 퀴즈 · ${wqSize()}문제`) : null));
 }
 function Report(off) {
   const days = weekDays(off), s = weekSum(days), p = weekSum(weekDays(off - 1));
@@ -2682,10 +2682,18 @@ const WQ_N = 10;
 function fcQuizItem(it) { const ok = fcGroup(it).filter(autoOk); return ok.length ? ok[rnd(ok.length)] : null; }
 function wqItems() { return FC_ITEMS.filter(it => db.wb[it.id] && fcGroup(it).some(autoOk)); }
 // 단어장 첫 화면의 퀴즈: 최근 3일 안에 본 카드, 아직 못 외운 카드, 퀴즈에서 틀린 적 있는 카드를 조금 더 자주
+// 11/20 사용자: 퀴즈에도 옛 단어가 섞여 나오게 — 절반(WQ_OLD)은 아직 카드로 안 본 단어에서 무작위로 (카드가 최근 것부터 쌓여서 안 본 단어 = 예전에 배운 단어)
+// 안 본 단어는 맞히면 그대로 두고(나중에 새 카드로 나온다), 틀리면 applyWordQuiz 가 기록을 만들어 내일 카드로 보낸다
+const WQ_OLD = 5;
+function wqOldItems() { return FC_ITEMS.filter(it => !db.wb[it.id] && fcGroup(it).some(autoOk)); }
+function wqSize() { return Math.min(WQ_N, wqItems().length + wqOldItems().length); }
 function wqPick() {
   const t = today(), w = it => db.wb[it.id];
   const score = it => Math.random() + (daysBetween(w(it).l || w(it).f || t, t) <= 3 ? 1 : 0) + (w(it).s < 3 ? .6 : 0) + (w(it).qx ? .6 : 0);
-  return wqItems().map(it => [it, score(it)]).sort((a, b) => b[1] - a[1]).slice(0, WQ_N).map(x => x[0].id);
+  const seen = wqItems().map(it => [it, score(it)]).sort((a, b) => b[1] - a[1]).map(x => x[0]);
+  const old = shuffle(wqOldItems());
+  const nOld = Math.min(old.length, Math.max(WQ_OLD, WQ_N - seen.length));
+  return seen.slice(0, WQ_N - nOld).concat(old.slice(0, nOld)).map(it => it.id);
 }
 function wordQuizQs(items) {
   const n = {}, out = [];
@@ -2709,8 +2717,13 @@ function startWordQuiz(ids) {
   Quiz(practiceSes);
 }
 function applyWordQuiz(ses, i) {
-  const q = ses.qs[i], r = ses.res[i], w = q && db.wb[fcRepOf(q.itemId)];
-  if (!w || !r || r === "skip" || r === "ok") return;
+  const q = ses.qs[i], r = ses.res[i];
+  if (!q || !r || r === "skip" || r === "ok") return;
+  const id = fcRepOf(q.itemId);
+  // 카드로 아직 안 본 옛 단어를 틀렸으면 기록을 새로 만들어 내일 카드로 (새 카드 하루 몫에는 안 넣는다)
+  if (!db.wb[id] && FC_GROUP.has(id)) db.wb[id] = { s: 0, n: 0, k: 0, f: today() };
+  const w = db.wb[id];
+  if (!w) return;
   if (r === "miss") w.s = 0; else w.s = Math.min(w.s, 1);
   w.d = addDays(today(), 1); w.qx = (w.qx || 0) + 1;
   save();
@@ -2778,8 +2791,8 @@ function WordBook() {
            unseen.length ? el("button", { class: "btn ghost", onclick: () => startFlash(fcPickNew(FC_NEW).map(it => it.id)) }, `새 카드 ${Math.min(FC_NEW, unseen.length)}장 더`) : null]),
     wqN ? el("div", { class: "card" },
       el("p", { class: "label" }, "단어장 퀴즈"),
-      el("p", { class: "note", style: "margin:0 0 14px;color:var(--muted)" }, `단어장에서 본 단어 ${wqN}개로 문제를 풀어요. 뜻·간체자·성조·듣기 문제가 섞여 나와요. 틀린 단어는 내일 카드로 다시 나와요.`),
-      el("button", { class: "btn ghost", onclick: () => startWordQuiz(wqPick()) }, `퀴즈 풀기 · ${Math.min(WQ_N, wqN)}문제`)) : null,
+      el("p", { class: "note", style: "margin:0 0 14px;color:var(--muted)" }, `단어장에서 본 단어 ${wqN}개에 예전에 배운 단어를 섞어 문제를 풀어요. 뜻·간체자·성조·듣기 문제가 섞여 나와요. 틀린 단어는 내일 카드로 다시 나와요.`),
+      el("button", { class: "btn ghost", onclick: () => startWordQuiz(wqPick()) }, `퀴즈 풀기 · ${wqSize()}문제`)) : null,
     // 11/11 사용자: 단계 이름(외움·외우는 중…)은 빼고 '본 단어'와 '어려운 단어'(몰라요를 눌렀거나 퀴즈에서 틀려 처음 단계인 카드)만
     el("div", { class: "card" },
       el("div", { class: "stat" },
