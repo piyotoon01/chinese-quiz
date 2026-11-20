@@ -599,7 +599,10 @@ function isNewExpr(it) { return /새 표현/.test(it.src) && prog(it.id).rc <= 2
 const AUTO_SKIP = new Set(["连动文", "麻"]);                       // 문법 용어, 성조 연습용 글자
 const WORD_SKIP = new Set(["的", "吧", "呢", "吗", "和"]);         // 뜻·간체자 맞히기에 맞지 않는 조사 — 예문 문제로만 낸다
 const INPUT_SKIP = new Set(["俄罗斯"]);                            // 간체자 쓰기만 뺀다 (11/4 사용자: 외래어 이름은 키보드에서 음절마다 골라 헷갈림) — 다른 유형은 그대로
-const LISTEN_SKIP = new Set(["只", "支", "还", "几"]);             // 한 글자만 읽히면 음성이 다른 소리로 읽기도 한다 (只 zhī, 还 huán, 几 jī)
+// 한 글자만 읽히면 음성이 다른 소리로 읽기도 하는 글자(只 zhī, 还 huán, 几 jī, 教 jiào, 都 dū, 喂 wèi)는
+// 소리를 빼지 않고, 발음이 하나뿐인 같은 소리 글자를 대신 읽힌다. 경성 조사는 혼자 소리 낼 수 없어 짧은 말로 들려준다.
+const SAY_AS = { "教": "交", "都": "兜", "喂": "围", "还": "孩", "只": "纸", "支": "知", "几": "己", "的": "我的", "了": "好了", "个": "一个" };
+const LISTEN_SKIP = new Set([]);                                   // 듣기 문제·카드 소리에서 아예 뺄 말 (지금은 없음 — 위 SAY_AS 로 해결)
 // 이 기기에서 '소리가 이상해요'를 누른 말 — 다음부터 듣기 문제로 내지 않는다 (설정 화면에 목록이 남는다)
 const oddSound = t => (S.odd || []).includes(ZH_ONLY(String(t)));
 // 过 는 경성 조사(guo, 경험)만 빼고 '지나다'(guò)는 낸다
@@ -1420,8 +1423,8 @@ const canSpeak = "speechSynthesis" in window;
 // 이 기기에 중국어 음성이 있는지: null = 아직 모름(음성 목록을 불러오는 중), true/false
 let ZH_VOICE = canSpeak ? null : false;
 function zhVoice(localOnly) {
-  // 광둥어(zh-HK) 음성은 표준어 발음이 아니라서 쓰지 않는다
-  const vs = speechSynthesis.getVoices().filter(v => !/HK|yue|cantonese/i.test(v.lang + " " + v.name) && (!localOnly || v.localService));
+  // 광둥어(zh-HK) 음성은 표준어 발음이 아니고, 대만(zh-TW) 음성은 읽는 법이 다른 말이 있어서 쓰지 않는다
+  const vs = speechSynthesis.getVoices().filter(v => !/HK|TW|Hant|yue|cantonese|taiwan/i.test(v.lang + " " + v.name) && (!localOnly || v.localService));
   return vs.find(v => /^zh[-_]CN/i.test(v.lang)) || vs.find(v => /^(zh|cmn)/i.test(v.lang));
 }
 // 대화용: 표준어(zh-CN) 음성 목록 — 둘 이상이면 A·B 를 다른 목소리로 읽는다
@@ -1444,7 +1447,8 @@ function say(text, rate) {
   if (!canSpeak) return;
   try {
     speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text.replace(/[A-Za-z가-힣+~]/g, ""));
+    const as = SAY_AS[String(text).replace(/[^一-鿿]/g, "")]; // 글자 하나짜리 말이면 대신 읽을 글자로
+    const u = new SpeechSynthesisUtterance(as || text.replace(/[A-Za-z가-힣+~]/g, ""));
     u.lang = "zh-CN"; u.rate = rate || .8;
     // 인터넷 음성(구글 등)은 속도를 무시하는 기기가 많아서, 천천히일 땐 기기 안의 음성을 먼저 쓴다
     const v = (rate && rate < .7 && zhVoice(true)) || zhVoice();
@@ -2481,7 +2485,7 @@ function fcMeans(it) {
   const ms = fcGroup(it).map(dm);
   return ms.filter((m, i) => ms.indexOf(m) === i && !ms.some((o, j) => j !== i && o !== m && o.includes(m)));
 }
-// 카드 🔊: 한 글자만 읽히면 음성이 다른 소리로 읽는 글자(还 huán·只 zhī·几 jī)와 '소리가 이상해요'로 뺀 말은 단어 소리를 내지 않는다 (예문 듣기는 그대로)
+// 카드 🔊: '소리가 이상해요'로 뺀 말은 단어 소리를 내지 않는다 (예문 듣기는 그대로). 다른 소리로 읽히던 한 글자는 say() 의 SAY_AS 가 바로잡는다
 const fcSayable = f => canHear() && !LISTEN_SKIP.has(ZH_ONLY(f)) && !oddSound(f);
 function fcNewLeft() { const w = db.wbNew; return Math.max(0, FC_NEW - (w && w.d === today() ? w.n : 0)); }
 function fcCounts() {
