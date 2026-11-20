@@ -1653,7 +1653,7 @@ function WordTile() {
     el("p", { class: "t" }, n ? `🃏 오늘 외울 카드 ${n}장` : "🃏 오늘 카드 끝! 🎉"),
     // 11/11 사용자: '외움'(날 바꿔 알아요 세 번)은 일주일 동안 0이라 고장처럼 보이고, 단계 넷을 다 보여 주면 더 헷갈린다
     // → 단계는 다시 보여 줄 날을 정하는 데만 쓰고, 화면에는 카드 넘긴 만큼 바로 늘어나는 '본 단어' 하나만
-    el("p", { class: "s" }, seen ? `본 단어 ${seen} / ${total}` : "최근에 배운 단어부터 카드로 외워요"),
+    el("p", { class: "s" }, seen ? `본 단어 ${seen} / ${total}` : "최근 단어와 옛 단어를 섞어 카드로 외워요"),
     seen ? el("div", { class: "pbar", role: "img", "aria-label": `${total}개 중 ${seen}개 봄` },
       el("i", { style: `width:${Math.round(seen / total * 100)}%` })) : null,
     n ? el("button", { class: "btn wb", onclick: () => startFlash(fcTodayIds()) }, "카드 시작")
@@ -2489,7 +2489,17 @@ function fcCounts() {
   FC_ITEMS.forEach(it => { const w = db.wb[it.id]; if (!w) c.none++; else if (w.s >= 3) c.done++; else if (w.s >= 1) c.mid++; else c.low++; });
   return c;
 }
-// 오늘 볼 카드: 하루 FC_DAY 장 안에서 다시 볼 카드 먼저(오래 밀린 것부터, 같으면 못 외운 것), 남는 자리에 새 카드(최근 배운 것부터, 하루 15장까지)
+// 새 카드 고르기 (11/20 사용자: 최근에 배운 단어만 나온다) — 절반은 최근에 배운 것부터, 절반은 가장 오래전에 배운 것부터, 번갈아 섞어서
+// FC_ITEMS 가 최근 배운 순이라 앞에서 절반, 뒤에서 절반을 집는다. 양쪽 끝에서 가운데로 모이니 빠지는 단어가 없다
+function fcPickNew(n) {
+  const un = FC_ITEMS.filter(it => !db.wb[it.id]);
+  if (n <= 0) return [];
+  if (un.length <= n) return un;
+  const nr = Math.ceil(n / 2), recent = un.slice(0, nr), old = un.slice(un.length - (n - nr)).reverse(), out = [];
+  for (let i = 0; i < nr; i++) { out.push(recent[i]); if (i < old.length) out.push(old[i]); }
+  return out;
+}
+// 오늘 볼 카드: 하루 FC_DAY 장 안에서 다시 볼 카드 먼저(오래 밀린 것부터, 같으면 못 외운 것), 남는 자리에 새 카드(최근 것 반·옛것 반, 하루 15장까지)
 // 단계 순으로만 고르면 밀린 날 '외움' 확인 카드가 끝없이 뒤로 밀린다. 오늘 이미 본 카드도 총량에 넣는다
 function fcToday() {
   const t = today(), w = id => db.wb[id];
@@ -2498,7 +2508,7 @@ function fcToday() {
     .sort((a, b) => w(a.id).d.localeCompare(w(b.id).d) || w(a.id).s - w(b.id).s || (b.d || "").localeCompare(a.d || ""));
   const room = Math.max(0, FC_DAY - seenToday);
   const due = all.slice(0, room);
-  const nw = FC_ITEMS.filter(it => !w(it.id)).slice(0, Math.min(fcNewLeft(), room - due.length));
+  const nw = fcPickNew(Math.min(fcNewLeft(), room - due.length));
   return { due, nw, rest: all.length - due.length };
 }
 let fcSes = null;
@@ -2760,12 +2770,12 @@ function WordBook() {
       n ? [el("p", { class: "label" }, "오늘 외울 카드"),
            el("p", { class: "prompt", style: "margin:0 0 2px" }, `${n}장`),
            el("p", { class: "note", style: "margin:0 0 14px;color:var(--muted)" },
-             [t.due.length ? `다시 볼 카드 ${t.due.length}장` : "", t.nw.length ? `새 카드 ${t.nw.length}장` + (t.nw[0] && t.nw[0].d ? ` (${koDate(t.nw[0].d).replace(/^\d+년 /, "").replace(/ \(.\)/, "")}에 배운 것부터)` : "") : ""].filter(Boolean).join(" · ")),
+             [t.due.length ? `다시 볼 카드 ${t.due.length}장` : "", t.nw.length ? `새 카드 ${t.nw.length}장` + (t.nw.length > 1 ? " (최근 단어 반 · 옛 단어 반)" : "") : ""].filter(Boolean).join(" · ")),
            el("button", { class: "btn wb", onclick: () => startFlash(fcTodayIds()) }, "카드 시작")]
         : [el("p", { class: "prompt", style: "margin:0 0 2px" }, "오늘 카드 끝! 🎉"),
            el("p", { class: "note", style: "margin:0 0 14px;color:var(--muted)" }, t.rest ? `오늘 몫 ${FC_DAY}장을 다 봤어요. 밀린 카드가 ${t.rest}장 있어요 — 여유 있을 때만 더 보세요.` : unseen.length ? "더 외우고 싶으면 새 카드를 더 볼 수 있어요." : "모든 단어를 한 번씩 봤어요. 다시 볼 날이 되면 카드가 나와요."),
            t.rest ? el("button", { class: "btn ghost", onclick: () => startFlash(fcRestIds()) }, `밀린 카드 ${Math.min(20, t.rest)}장 더 보기`) : null,
-           unseen.length ? el("button", { class: "btn ghost", onclick: () => startFlash(unseen.slice(0, FC_NEW).map(it => it.id)) }, `새 카드 ${Math.min(FC_NEW, unseen.length)}장 더`) : null]),
+           unseen.length ? el("button", { class: "btn ghost", onclick: () => startFlash(fcPickNew(FC_NEW).map(it => it.id)) }, `새 카드 ${Math.min(FC_NEW, unseen.length)}장 더`) : null]),
     wqN ? el("div", { class: "card" },
       el("p", { class: "label" }, "단어장 퀴즈"),
       el("p", { class: "note", style: "margin:0 0 14px;color:var(--muted)" }, `단어장에서 본 단어 ${wqN}개로 문제를 풀어요. 뜻·간체자·성조·듣기 문제가 섞여 나와요. 틀린 단어는 내일 카드로 다시 나와요.`),
@@ -2777,7 +2787,7 @@ function WordBook() {
         el("div", null, el("b", { style: `color:${c.low ? "var(--bad)" : "var(--muted)"}` }, c.low), el("span", null, "어려운 단어"))),
       c.low ? el("button", { class: "btn ghost mt", onclick: () => startFlash(shuffle(hardIds), true) }, `어려운 것만 보기 · ${c.low}장`) : null,
       el("p", { class: "note mt", style: "color:var(--muted)" },
-        `알아요를 누른 카드는 2일 → 5일 → 2주로 점점 뜸하게 다시 나와요. 몰라요·헷갈려요는 내일 다시 나와요. 하루 ${FC_DAY}장까지 — 다시 볼 카드가 먼저고, 남는 자리에 새 카드가 최대 ${FC_NEW}장(최근에 배운 단어부터) 들어가요.`))
+        `알아요를 누른 카드는 2일 → 5일 → 2주로 점점 뜸하게 다시 나와요. 몰라요·헷갈려요는 내일 다시 나와요. 하루 ${FC_DAY}장까지 — 다시 볼 카드가 먼저고, 남는 자리에 새 카드가 최대 ${FC_NEW}장(최근에 배운 단어 반, 예전에 배운 단어 반) 들어가요.`))
   );
 }
 
