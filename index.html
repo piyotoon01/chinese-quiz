@@ -2676,7 +2676,7 @@ function FlashDone() {
 // ---------- 단어장 퀴즈 (11/11 사용자: 단어장에서 본 단어는 퀴즈로도 풀게) ----------
 // 단어 문제만 낸다: 뜻 맞히기·간체자 고르기·간체자 쓰기(키보드 있을 때)·성조 고르기·듣고 고르기·짝 맞추기(한 세트 하나)
 // 복습 퀴즈와 따로 — 결과는 단어장(db.wb)에만: 틀리면 못 외움으로, 힌트 받고 맞히면 단계를 1로 내리고 내일 카드로 다시 나온다
-const WQ_N = 10;
+const WQ_N = 15; // 11/20 사용자: 10 → 15문제 (본 단어 9 + 옛 단어 6)
 // 퀴즈로 낼 수 있는지는 autoOk 로만 본다 (autoQuestions 를 단어마다 돌리면 477개를 다 봤을 때 화면이 10초 넘게 멈췄다 — 11/11 점검)
 // 묶인 카드(点 등)는 묶음 안에서 문제를 낼 수 있는 항목 하나로 낸다
 function fcQuizItem(it) { const ok = fcGroup(it).filter(autoOk); return ok.length ? ok[rnd(ok.length)] : null; }
@@ -2684,7 +2684,7 @@ function wqItems() { return FC_ITEMS.filter(it => db.wb[it.id] && fcGroup(it).so
 // 단어장 첫 화면의 퀴즈: 최근 3일 안에 본 카드, 아직 못 외운 카드, 퀴즈에서 틀린 적 있는 카드를 조금 더 자주
 // 11/20 사용자: 퀴즈에도 옛 단어가 섞여 나오게 — 절반(WQ_OLD)은 아직 카드로 안 본 단어에서 무작위로 (카드가 최근 것부터 쌓여서 안 본 단어 = 예전에 배운 단어)
 // 안 본 단어는 맞히면 그대로 두고(나중에 새 카드로 나온다), 틀리면 applyWordQuiz 가 기록을 만들어 내일 카드로 보낸다
-const WQ_OLD = 5;
+const WQ_OLD = 6;
 function wqOldItems() { return FC_ITEMS.filter(it => !db.wb[it.id] && fcGroup(it).some(autoOk)); }
 function wqSize() { return Math.min(WQ_N, wqItems().length + wqOldItems().length); }
 function wqPick() {
