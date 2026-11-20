@@ -918,7 +918,7 @@ function sayLines(d, rate, onLine) {
     const low = MALE_ROLE.has(r.A) && !MALE_ROLE.has(r.B) ? "A" : "B"; // 낮은 목소리로 읽을 사람
     d.lines.forEach((l, i) => {
       const u = new SpeechSynthesisUtterance(l.h);
-      u.lang = "zh-CN"; u.rate = rate || .8;
+      u.lang = "zh-CN"; u.rate = rate || .7;
       const isLow = l.s === low;
       const v = mv && fv ? (isLow ? mv : fv) : (isLow ? (vs[1] || base) : base);
       if (v) u.voice = v;
@@ -1458,7 +1458,7 @@ function say(text, rate) {
     speechSynthesis.cancel();
     const as = SAY_AS[String(text).replace(/[^一-鿿]/g, "")]; // 글자 하나짜리 말이면 대신 읽을 글자로
     const u = new SpeechSynthesisUtterance(as || text.replace(/[A-Za-z가-힣+~]/g, ""));
-    u.lang = "zh-CN"; u.rate = rate || .8;
+    u.lang = "zh-CN"; u.rate = rate || .7;
     // 인터넷 음성(구글 등)은 속도를 무시하는 기기가 많아서, 천천히일 땐 기기 안의 음성을 먼저 쓴다
     const v = (rate && rate < .7 && zhVoice(true)) || zhVoice();
     if (v) u.voice = v;
