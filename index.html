@@ -428,10 +428,10 @@ input.answer:focus { outline: none; border-color: var(--accent); }
 </head>
 <body>
 <div class="wrap" id="app"></div>
-<script src="data/items.js?v=202611181307"></script>
-<script src="data/questions.js?v=202611181307"></script>
-<script src="data/near.js?v=202611181307"></script>
-<script src="data/dialogs.js?v=202611181307"></script>
+<script src="data/items.js?v=202611200742"></script>
+<script src="data/questions.js?v=202611200742"></script>
+<script src="data/near.js?v=202611200742"></script>
+<script src="data/dialogs.js?v=202611200742"></script>
 <script>
 "use strict";
 (() => {
@@ -602,6 +602,8 @@ const INPUT_SKIP = new Set(["俄罗斯"]);                            // 간체�
 // 한 글자만 읽히면 음성이 다른 소리로 읽기도 하는 글자(只 zhī, 还 huán, 几 jī, 教 jiào, 都 dū, 喂 wèi)는
 // 소리를 빼지 않고, 발음이 하나뿐인 같은 소리 글자를 대신 읽힌다. 경성 조사는 혼자 소리 낼 수 없어 짧은 말로 들려준다.
 const SAY_AS = { "教": "交", "都": "兜", "喂": "围", "还": "孩", "只": "纸", "支": "知", "几": "己", "的": "我的", "了": "好了", "个": "一个" };
+// 过 는 글자가 같은 두 항목(guo 경험·guò 지나다)이 있다. 경성 쪽은 혼자 소리 낼 수 없어 去过 로 들려준다
+const spk = (it, text) => (it && ZH_ONLY(String(it.h)) === "过" && it.p && !tones(it.p).some(t => t) ? "去过" : (text == null ? it.h : text));
 const LISTEN_SKIP = new Set([]);                                   // 듣기 문제·카드 소리에서 아예 뺄 말 (지금은 없음 — 위 SAY_AS 로 해결)
 // 이 기기에서 '소리가 이상해요'를 누른 말 — 다음부터 듣기 문제로 내지 않는다 (설정 화면에 목록이 남는다)
 const oddSound = t => (S.odd || []).includes(ZH_ONLY(String(t)));
@@ -900,20 +902,27 @@ function DialogBox(d, mode) {
   });
   return { box: el("div", { class: "dlg" + (mode === "veil" ? " veil" : ""), "aria-label": "대화" }, rows), rows };
 }
-// 대화를 한 줄씩 이어 읽는다. 중국어 음성이 둘 이상이면 A·B 목소리를 다르게, 하나뿐이면 높낮이만 다르게
+// 대화를 한 줄씩 이어 읽는다. 남자 목소리로 확인되는 음성이 있으면 남자 역(민호)에 쓰고,
+// 없으면 높낮이를 크게 달리해(남자 역·B 는 낮게) 두 사람이 구분되게 한다 (11/20 신고: 둘 다 여자 목소리라 구분이 안 됨)
+const MALE_VOICE = /yunxi|yunyang|yunjian|yunfeng|yunhao|yunze|yunye|kangkang|li-?mu|han|eddy|reed|rocko|grandpa|male|男/i;
+const MALE_ROLE = new Set(["민호"]);
 function sayLines(d, rate, onLine) {
   if (!canSpeak) return;
   try {
     speechSynthesis.cancel();
     const slow = rate && rate < .7;
     const vs = zhVoices(slow);
-    const a = vs[0] || zhVoice(), b = vs[1] || a;
+    const base = vs[0] || zhVoice();
+    const mv = vs.find(v => MALE_VOICE.test(v.name)), fv = vs.find(v => !MALE_VOICE.test(v.name));
+    const r = d.roles || {};
+    const low = MALE_ROLE.has(r.A) && !MALE_ROLE.has(r.B) ? "A" : "B"; // 낮은 목소리로 읽을 사람
     d.lines.forEach((l, i) => {
       const u = new SpeechSynthesisUtterance(l.h);
       u.lang = "zh-CN"; u.rate = rate || .8;
-      const v = l.s === "A" ? a : b;
+      const isLow = l.s === low;
+      const v = mv && fv ? (isLow ? mv : fv) : (isLow ? (vs[1] || base) : base);
       if (v) u.voice = v;
-      if (a === b) u.pitch = l.s === "A" ? 1.15 : .85;
+      if (!(mv && fv)) u.pitch = isLow ? .7 : 1.15;
       if (onLine) { u.onstart = () => onLine(i); if (i === d.lines.length - 1) u.onend = () => onLine(-1); }
       speechSynthesis.speak(u);
     });
@@ -1717,7 +1726,7 @@ function Report(off) {
           el("div", null, el("span", { class: "zh" }, it.h), el("span", { class: "tag bad" }, `${c}번`)),
           el("div", { class: "note py", style: "color:var(--muted);margin:0" }, it.p),
           el("div", { class: "note", style: "margin:0" }, dm(it))),
-        canHear() && PURE_ZH.test(it.h) ? el("button", { class: "speak", "aria-label": "듣기", onclick: () => say(it.h) }, "🔊") : null))),
+        canHear() && PURE_ZH.test(it.h) ? el("button", { class: "speak", "aria-label": "듣기", onclick: () => say(spk(it)) }, "🔊") : null))),
       again.length ? el("button", { class: "btn mt", onclick: () => startPractice(again) }, `이 말들 다시 풀기 · ${again.length}개`) : null) : null,
     types.length ? el("div", { class: "card" },
       el("p", { class: "label" }, "유형별 바로 맞힘"),
@@ -1969,7 +1978,7 @@ function pairsBox(q) {
     return el("div", { class: "pair" },
       ruby ? el("span", { class: "zh rb" }, ruby.map(([c, r]) => (r === null ? c : el("ruby", null, c, el("rt", null, r))))) : el("span", { class: "zh" }, x.h),
       el("span", { class: "pm" }, x.m),
-      canHear() ? el("button", { class: "speak", "aria-label": `${x.h} 발음 듣기`, onclick: () => say(x.h) }, "🔊") : null);
+      canHear() ? el("button", { class: "speak", "aria-label": `${x.h} 발음 듣기`, onclick: () => say(spk({ h: x.h, p })) }, "🔊") : null);
   }));
 }
 
@@ -2244,7 +2253,7 @@ function Quiz(s) {
         rubyPy ? el("div", { class: "zh rb" }, rubyPy.map(([c, r]) => (r === null ? c : el("ruby", null, c, el("rt", null, r))))) : el("div", { class: "zh" }, full.h),
         rubyPy ? null : el("div", { class: "py" }, full.p),
         el("div", null, full.m),
-        canHear() ? el("button", { class: "speak", onclick: () => say(full.h) }, "🔊 발음 듣기") : null
+        canHear() ? el("button", { class: "speak", onclick: () => say(spk(full)) }, "🔊 발음 듣기") : null
       ),
       more, extraBox, next, report
     ));
@@ -2295,7 +2304,7 @@ function PastQ(ses, i) {
       ruby ? el("div", { class: "zh rb" }, ruby.map(([c, py]) => (py === null ? c : el("ruby", null, c, el("rt", null, py))))) : el("div", { class: "zh" }, full.h),
       ruby ? null : el("div", { class: "py" }, full.p),
       el("div", null, full.m),
-      canHear() ? el("button", { class: "speak", onclick: () => say(full.h) }, "🔊 발음 듣기") : null));
+      canHear() ? el("button", { class: "speak", onclick: () => say(spk(full)) }, "🔊 발음 듣기") : null));
   }
   if (q.explain && !q.pairs) card.append(el("p", { class: "note" }, q.explain));
   mount(
@@ -2411,7 +2420,7 @@ function NoteCard(it) {
   return el("div", { class: "card ncard" },
     el("div", { class: "nhead" },
       el("div", null, el("span", { class: "zh nzh" }, it.h), el("div", { class: "py" }, it.p)),
-      sayWhat && canHear() ? el("button", { class: "play small", "aria-label": "발음 듣기", onclick: () => say(sayWhat) }, "🔊") : null),
+      sayWhat && canHear() ? el("button", { class: "play small", "aria-label": "발음 듣기", onclick: () => say(sent ? sayWhat : spk(it, sayWhat)) }, "🔊") : null),
     el("div", null, it.m, p.wc >= 2 ? el("span", { class: "tag bad" }, `${p.wc}번 틀림`) : null,
       n && n.d ? el("span", { class: "tag day" }, koDate(n.d).replace(/^\d+년 /, "").replace(/ \(.\)/, "")) : null),
     n ? el("div", { class: "nmiss" },
@@ -2624,7 +2633,7 @@ function Flash() {
       el("div", { class: "fhead" },
         face(),
         el("div", { class: "fpy" }, el("span", null, it.p),
-          fcSayable(front) ? el("button", { class: "speak", "aria-label": "발음 듣기", onclick: () => say(front) }, "🔊") : null)),
+          fcSayable(front) ? el("button", { class: "speak", "aria-label": "발음 듣기", onclick: () => say(spk(it, front)) }, "🔊") : null)),
       means.length > 1
         ? el("div", { class: "fmean" }, means.map(m => el("div", null, "· " + m)))
         : el("p", { class: "fmean" }, means[0]),
@@ -2667,7 +2676,7 @@ function FlashDone() {
         const it = byId.get(id), f = fcFront(it);
         return el("li", null,
           el("div", { class: "bd" }, el("span", { class: "zh" }, f), " ", el("span", { class: "py", style: "color:var(--muted)" }, it.p), el("div", null, fcMeans(it).join(" / "))),
-          fcSayable(f) ? el("button", { class: "speak", "aria-label": "발음 듣기", onclick: () => say(f) }, "🔊") : null);
+          fcSayable(f) ? el("button", { class: "speak", "aria-label": "발음 듣기", onclick: () => say(spk(it, f)) }, "🔊") : null);
       }))) : null,
     qN ? el("button", { class: "btn wb", onclick: () => startWordQuiz(ids) }, `방금 본 단어로 퀴즈 · ${qN}문제`) : null,
     hard.length ? el("button", { class: "btn ghost", onclick: () => startFlash(shuffle(hard), true) }, `어려운 것만 한 판 더 · ${hard.length}장`) : null,
@@ -2757,7 +2766,7 @@ function WordQuizDone(ses) {
         const it = byId.get(id), f = fcFront(it);
         return el("li", null,
           el("div", { class: "bd" }, el("span", { class: "zh" }, f), " ", el("span", { class: "py", style: "color:var(--muted)" }, it.p), el("div", null, fcMeans(it).join(" / "))),
-          fcSayable(f) ? el("button", { class: "speak", "aria-label": "발음 듣기", onclick: () => say(f) }, "🔊") : null);
+          fcSayable(f) ? el("button", { class: "speak", "aria-label": "발음 듣기", onclick: () => say(spk(it, f)) }, "🔊") : null);
       }))) : null,
     wrong.length ? el("button", { class: "btn wb", onclick: () => startFlash(shuffle(wrong), true) }, `틀린 단어 카드로 한 번 더 · ${wrong.length}장`) : null,
     el("button", { class: "btn ghost", onclick: () => WordBook() }, "단어장으로"),
