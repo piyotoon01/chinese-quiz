@@ -465,6 +465,24 @@ const fmt = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())
 const today = () => fmt(new Date());
 function addDays(str, n) { const d = new Date(str + "T00:00:00"); d.setDate(d.getDate() + n); return fmt(d); }
 function daysBetween(a, b) { return Math.round((new Date(b + "T00:00:00") - new Date(a + "T00:00:00")) / 864e5); }
+// 잘못 찍힌 공부한 날 옮기기 (11/23, 화면에는 없는 고침 링크): 주소 끝에 #moveday=2026-11-22,2026-11-23 을 붙여 열면
+// 앞 날짜의 도장·주간 리포트 기록을 뒷 날짜로 옮긴다. 시작한 날로 도장이 찍히던 때(sesDay 전) 기록을 바로잡는 용도
+try {
+  const m = /^#moveday=(\d{4}-\d{2}-\d{2}),(\d{4}-\d{2}-\d{2})$/.exec(location.hash);
+  if (m && m[1] !== m[2]) {
+    const [, from, to] = m, log = db.log || {};
+    if (db.days.includes(from)) db.days = db.days.filter(d => d !== from).concat(db.days.includes(to) ? [] : [to]).sort();
+    if (log[from]) {
+      const a = log[from], b = log[to] = log[to] || { n: 0, ok: 0, nw: 0, k: {}, x: {} };
+      b.n += a.n || 0; b.ok += a.ok || 0; b.nw += a.nw || 0;
+      for (const t in a.k || {}) { const kk = b.k[t] = b.k[t] || [0, 0]; kk[0] += a.k[t][0]; kk[1] += a.k[t][1]; }
+      for (const id in a.x || {}) b.x[id] = (b.x[id] || 0) + a.x[id];
+      delete log[from];
+    }
+    save();
+    history.replaceState(null, "", location.pathname + location.search);
+  }
+} catch (e) {}
 function koDate(str) {
   const d = new Date(str + "T00:00:00");
   return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${"일월화수목금토"[d.getDay()]})`;
@@ -1306,12 +1324,21 @@ function newSession(short) {
 }
 // 세션을 끝낸다: 답한 문제만 복습 기록에 반영하고, 절반 넘게 풀었으면 그날을 '복습한 날'로 남긴다
 // (결과 화면을 안 보고 닫거나, 자정을 넘기거나, 새로 시작해도 푼 기록이 사라지지 않게)
+// 세트를 실제로 푼 날 = 답을 가장 많이 낸 날 (같으면 앞 날 — 밤늦게 시작해 자정을 넘겨 끝낸 세트는 그 밤으로).
+// 11/23 사용자: 일요일에 시작만 해 둔 세트를 월요일에 이어 풀었더니 일요일 도장이 찍혀 '2일째'가 됐다 → 시작한 날이 아니라 푼 날로 센다.
+// 답한 날(ses.ad)이 안 남은 답(이 고침 전에 푼 것)은 시작한 날에 푼 것으로 본다
+function sesDay(ses) {
+  const cnt = {};
+  ses.res.forEach((r, i) => { if (!r || r === "skip") return; const d = (ses.ad || [])[i] || ses.date; cnt[d] = (cnt[d] || 0) + 1; });
+  const ds = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a] || a.localeCompare(b));
+  return ds[0] || ses.date;
+}
 function finalize(ses) {
   if (!ses || ses.applied) return;
   applyResults(ses);
   ses.applied = true;
-  const answered = ses.res.filter(r => r && r !== "skip").length;
-  if (answered >= Math.ceil(ses.qs.length / 2) && !db.days.includes(ses.date)) db.days.push(ses.date);
+  const answered = ses.res.filter(r => r && r !== "skip").length, day = sesDay(ses);
+  if (answered >= Math.ceil(ses.qs.length / 2) && !db.days.includes(day)) db.days.push(day);
   db.days = db.days.slice(-400); // 기록이 끝없이 늘지 않게 최근 것만 남긴다
   save();
 }
@@ -2266,7 +2293,7 @@ function Quiz(s) {
       if (over > 0) window.scrollBy({ top: Math.min(over, Math.max(0, r.top - 12)), behavior: "smooth" });
     }
     fit();
-    ses.res[ses.idx] = result; save();
+    ses.res[ses.idx] = result; (ses.ad = ses.ad || [])[ses.idx] = today(); save(); // ad: 답한 날 (도장은 푼 날에 — sesDay)
     if (ses.wq) applyWordQuiz(ses, ses.idx); else if (ses.practice) applyPractice(ses, ses.idx);
     // 확인에 쓴 키 입력이 끝난 뒤에 초점을 옮긴다 — 다음 엔터 한 번으로 다음 문제로 간다
     setTimeout(() => next.focus({ preventScroll: true }), 0);
@@ -2319,7 +2346,7 @@ function PastQ(ses, i) {
 }
 
 function applyResults(ses) {
-  const base = ses.date, seen = {}, missAt = {}; // 시작한 날 기준 (자정을 넘겨 끝내도 간격이 하루 밀리지 않게)
+  const base = sesDay(ses), seen = {}, missAt = {}; // 푼 날 기준 (자정을 넘겨 끝내도 간격이 하루 밀리지 않게)
   ses.qs.forEach((q, i) => {
     const r = ses.res[i]; if (!r || r === "skip" || !q.itemId) return; // 소리가 안 나서 넘긴 문제는 기록하지 않는다
     const sk = sentKey(q); if (sk) (db.shown = db.shown || {})[sk] = base; // 이 문장을 마지막으로 본 날
@@ -2356,7 +2383,7 @@ function Results() {
     el("div", { class: "rhead" },
       el("h1", null, answered && cnt.ok === answered ? "전부 맞혔어요! 🎉" : "오늘 공부 끝!"),
       el("p", { class: "sub" }, `${n}문제 중 ${cnt.ok}문제를 바로 맞혔어요`),
-      answered ? Stamp(cnt.ok, answered, ses.date) : null),
+      answered ? Stamp(cnt.ok, answered, sesDay(ses)) : null),
     el("div", { class: "card" },
       el("div", { class: "stat" },
         el("div", null, el("b", { style: "color:var(--ok)" }, cnt.ok), el("span", null, "맞힘")),
