@@ -928,6 +928,7 @@ function sayLines(d, rate, onLine) {
   if (!canSpeak) return;
   try {
     speechSynthesis.cancel();
+    unmute();
     const slow = rate && rate < .7;
     const vs = zhVoices(slow);
     const base = vs[0] || zhVoice();
@@ -1479,10 +1480,35 @@ function checkVoices() {
 // 듣기 문제는 중국어 음성이 확인된 기기에서, 사용자가 끄지 않았을 때만 낸다
 function listenOn() { if (ZH_VOICE === null) checkVoices(); return S.listen !== false && ZH_VOICE === true; }
 if (canSpeak && speechSynthesis.addEventListener) speechSynthesis.addEventListener("voiceschanged", checkVoices);
+// 아이폰은 벨소리가 무음이면 음성 읽기도 안 들린다 (11/23·11/24 사용자). 소리를 내기 직전에 이 페이지의 소리를
+// '재생(playback)' 방식으로 바꾸고 소리 없는 짧은 오디오를 틀어, 무음 스위치와 상관없이 들리게 해 본다
+let quietEl = null;
+function unmute() {
+  try {
+    if (typeof navigator === "undefined") return;
+    const ua = navigator.userAgent || "";
+    if (!(/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1))) return;
+    if (navigator.audioSession) navigator.audioSession.type = "playback";
+    if (!quietEl) {
+      const n = 4000, b = new Uint8Array(44 + n), v = new DataView(b.buffer);
+      const str = (o, t) => { for (let i = 0; i < t.length; i++) b[o + i] = t.charCodeAt(i); };
+      str(0, "RIFF"); v.setUint32(4, 36 + n, true); str(8, "WAVEfmt "); v.setUint32(16, 16, true);
+      v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, 8000, true); v.setUint32(28, 8000, true);
+      v.setUint16(32, 1, true); v.setUint16(34, 8, true); str(36, "data"); v.setUint32(40, n, true);
+      b.fill(128, 44);
+      quietEl = new Audio(URL.createObjectURL(new Blob([b], { type: "audio/wav" })));
+      quietEl.setAttribute("playsinline", "");
+    }
+    quietEl.currentTime = 0;
+    const pr = quietEl.play();
+    if (pr && pr.catch) pr.catch(() => {});
+  } catch (e) {}
+}
 function say(text, rate) {
   if (!canSpeak) return;
   try {
     speechSynthesis.cancel();
+    unmute();
     const as = SAY_AS[String(text).replace(/[^一-鿿]/g, "")]; // 글자 하나짜리 말이면 대신 읽을 글자로
     const u = new SpeechSynthesisUtterance(as || text.replace(/[A-Za-z가-힣+~]/g, ""));
     u.lang = "zh-CN"; u.rate = rate || .7;
