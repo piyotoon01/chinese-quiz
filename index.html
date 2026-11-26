@@ -428,10 +428,10 @@ input.answer:focus { outline: none; border-color: var(--accent); }
 </head>
 <body>
 <div class="wrap" id="app"></div>
-<script src="data/items.js?v=202611200742"></script>
-<script src="data/questions.js?v=202611200742"></script>
-<script src="data/near.js?v=202611200742"></script>
-<script src="data/dialogs.js?v=202611200742"></script>
+<script src="data/items.js?v=202611261326"></script>
+<script src="data/questions.js?v=202611261326"></script>
+<script src="data/near.js?v=202611261326"></script>
+<script src="data/dialogs.js?v=202611261326"></script>
 <script>
 "use strict";
 (() => {
@@ -441,6 +441,8 @@ const DIALOGS = window.DIALOGS || []; // 과마다 배운 말로 만든 A·B 짧
 const NEAR = window.NEAR || {}; // 예문 → 정답과 한 군데만 다른 오답 뜻 3개 (없으면 다른 예문의 뜻으로)
 const byId = new Map(ITEMS.map(it => [it.id, it]));
 const byH = new Map(ITEMS.map(it => [it.h, it]));
+// 손문제가 가리키는 항목. 간체자가 같은 항목이 둘이면(过 guo·guò) 손문제의 itemP(병음)로 가린다
+const itemOfQ = q => (q.itemP && ITEMS.find(it => it.h === q.item && it.p === q.itemP)) || byH.get(q.item);
 const INTERVAL = [1, 3, 7, 14, 30]; // 복습 횟수 0회→1일, 1회→3일, 2회→7일, 3회→14일, 4회 이상→30일
 const INTERVAL_KNOWN = [30, 60, 90, 120]; // 한 번도 안 틀린 항목: 맞힐 때마다 30일 → 60일 → 90일 → 120일
 const LEVELS = ["새로 배움", "애매함", "익숙함"];
@@ -615,11 +617,11 @@ function isNewExpr(it) { return /새 표현/.test(it.src) && prog(it.id).rc <= 2
 
 // 자동 문제에서 뺄 항목
 const AUTO_SKIP = new Set(["连动文", "麻"]);                       // 문법 용어, 성조 연습용 글자
-const WORD_SKIP = new Set(["的", "吧", "呢", "吗", "和"]);         // 뜻·간체자 맞히기에 맞지 않는 조사 — 예문 문제로만 낸다
+const WORD_SKIP = new Set(["的", "吧", "呢", "吗", "和", "啊"]);         // 뜻·간체자 맞히기에 맞지 않는 조사 — 예문 문제로만 낸다
 const INPUT_SKIP = new Set(["俄罗斯"]);                            // 간체자 쓰기만 뺀다 (11/4 사용자: 외래어 이름은 키보드에서 음절마다 골라 헷갈림) — 다른 유형은 그대로
 // 한 글자만 읽히면 음성이 다른 소리로 읽기도 하는 글자(只 zhī, 还 huán, 几 jī, 教 jiào, 都 dū, 喂 wèi)는
 // 소리를 빼지 않고, 발음이 하나뿐인 같은 소리 글자를 대신 읽힌다. 경성 조사는 혼자 소리 낼 수 없어 짧은 말로 들려준다.
-const SAY_AS = { "教": "交", "都": "兜", "喂": "围", "还": "孩", "只": "纸", "支": "知", "几": "己", "的": "我的", "了": "好了", "个": "一个" };
+const SAY_AS = { "教": "交", "都": "兜", "喂": "围", "还": "孩", "只": "纸", "支": "知", "几": "己", "的": "我的", "了": "好了", "个": "一个", "啊": "是啊" };
 // 过 는 글자가 같은 두 항목(guo 경험·guò 지나다)이 있다. 경성 쪽은 혼자 소리 낼 수 없어 去过 로 들려준다
 const spk = (it, text) => (it && ZH_ONLY(String(it.h)) === "过" && it.p && !tones(it.p).some(t => t) ? "去过" : (text == null ? it.h : text));
 const LISTEN_SKIP = new Set([]);                                   // 듣기 문제·카드 소리에서 아예 뺄 말 (지금은 없음 — 위 SAY_AS 로 해결)
@@ -656,7 +658,7 @@ const SYN = [["二", "两"], ["很", "非常", "特别", "真", "真的"], ["这
   ["狗", "个"], ["他", "那"], ["它", "那", "那个"], ["唱", "唱歌"], ["做饭", "做菜"], ["家", "家里"], ["里", "里边儿"], ["旁边", "旁边儿"], ["分", "分钟"],
   ["就", "一直"], ["几", "多少", "多"], ["要", "需要", "想"], ["没关系", "不客气", "可以", "不错", "还可以", "还不错", "没问题"], ["你好", "您好", "再见", "慢走"],
   ["而且", "还有"], ["真的", "真的吗"], ["虽然", "但是", "可是", "不过"], ["走", "走路"], ["白", "白色"], ["学", "学习"], ["说", "告诉"], ["高兴", "快乐"],
-  ["条", "件"], ["姓", "贵姓"], ["坏", "破"], ["菜", "饭"], ["早上", "上午"], ["多少", "钱"], ["这么", "那么"], ["让", "教"]];
+  ["条", "件"], ["姓", "贵姓"], ["坏", "破"], ["菜", "饭"], ["早上", "上午"], ["多少", "钱"], ["这么", "那么"], ["让", "教"], ["又", "再"], ["高兴", "快乐", "开心"], ["学院", "补习班"], ["事", "事情"]];
 // 한 글자가 여러 무리에 들어 있을 수 있으니 무리들을 합쳐서 본다 (那, 真的, 但是, 要, 多少 …)
 const synOf = new Map();
 SYN.forEach(g => g.forEach(h => { if (!synOf.has(h)) synOf.set(h, new Set()); g.forEach(x => synOf.get(h).add(x)); }));
@@ -685,7 +687,7 @@ function clash(a, b) {
 // SYN 은 '오답 보기에서 빼기'용이라 넓다(很·非常·特别). '뜻 낱말을 모두 포함'까지 받으면 '주말'에 上周末가 정답이 된다
 const SAME = [["这儿", "这里"], ["那儿", "那里"], ["妈", "妈妈"], ["周", "星期"], ["但是", "可是"], ["看看", "看一下"], ["等等", "等一下"],
   ["旁边", "旁边儿"], ["但是", "可是", "不过"], ["里", "里边儿", "里边", "里面"], ["一刻", "十五分"], ["半", "三十分"], ["三刻", "四十五分"], ["点儿", "一点儿"], ["汉语", "中文"],
-  ["唱", "唱歌"]];
+  ["唱", "唱歌"], ["学院", "补习班"], ["事", "事情"]];
 function sameMeaning(it) {
   const h = ZH_ONLY(it.h);
   const group = SAME.filter(g => g.includes(h)).reduce((a, g) => a.concat(g), []); // 항목에 없는 말(十五分)도 받는다
@@ -870,7 +872,7 @@ function errSpot(wrong, right) {
   return [...spot].sort((x, y) => x - y);
 }
 // 틀린 곳 찾기에서 뺄 후보(손문제 id|틀린 문장)와 뜻만 보고도 이해되게 고친 이유 — 10/31 검토 에이전트
-const FE_SKIP = new Set(["j-sit-haishi-tea|你喝咖啡和茶？","g-sit-la-bu-la|牛肉面辣不辣吗？","e-sit-zouba|慢走。","e-sit-zouba|请进。","q-sit-manzou|等一下！","q-sit-manzou|请进！","d-sit-manzou-reply|慢走！","d-sit-manzou-reply|请进！","d-sit-manzou-reply|不客气！","d-sit-150|一百五块。","i3-mc-yibaiba-bag|这个书包一百八块。","d-sit-110|一百一块。","d-liangkuai-liangmao-er|这支铅笔二块二毛二。","q-buyong|你不要等我。","d-sit-qingjin|再见！","d-sit-qingjin|慢走！","i3-sit-qingwen-subway|请问，这儿离地铁站远不远吗？","c-sit-meiqu|我不去过。","c-sit-ranhoune|为什么？","b-dengyixia-sit|再见！","b-dengyixia-sit|慢走！","b-haoma-mc|我们下午去公园，好不好吗？","b-haibucuo-sit|没意思。","i1-sit-haobuhao|我们点烤鸭，好不好吗？","b-haikeyi-sit|非常好。","b-haikeyi-sit|不太好。","b-bucuo-sit|没关系！","b-bucuo-sit|没问题！","b-zhende-sit|不错。","b-meiwenti-sit|不客气！","b-guolai-sit|我过去！","b-guolai-sit|慢走！","i2-sit-hui-riyu|你会不会说日语吗？","a-sit-meiguanxi|对不起！","a-sit-meiguanxi|不客气！","a-mc-yiqianlingwushi|这个书包一千五。","i1-mc-1050|我的手机一千五块。","a-sit-nihao|再见！","a-sit-yibaiwushi|一百零五。","a-sit-duibuqi|谢谢！","a-sit-duibuqi|不客气！","a-sit-duibuqi|没关系！","r-sit-wojiushi|她不在。","r-sit-shi-wangfang|喂，王芳在吗？","r-sit-wangfang-zai|喂，是王芳吗？","r-sit-bujianbusan|好。不冷不热。","r-sit-shenmeshi|你有什么爱好？"]);
+const FE_SKIP = new Set(["u-mc-guo-beijing|我去了北京。","u-sit-kanguo-dianying|我没看过这个电影。","t-mc-hui-zuocai|我妈妈要做中国菜。","t-mc-hui-zuocai|我妈妈能做中国菜。","t-mc-hui-zuocai|我妈妈在做中国菜。","t-mc-neng-shangban|我感冒了，今天不会去上班。","t-mc-chi-wan|我们吃晚了，走吧。","t-mc-chi-wan|我们吃慢了，走吧。","t-mc-shuo-man|请说早一点儿。","t-mc-shuo-man|请说晚一点儿。","s-sit-dian-waimai|我们去饭馆吧。","s-sit-dian-waimai|我们做饭吧。","s-sit-dian-waimai|我们卖菜吧。","s-mc-guandian-mingtian|他们已经起床了，我们明天再来吧。","s-mc-guandian-mingtian|他们已经开店了，我们明天再来吧。","s-mc-guandian-mingtian|他们已经起飞了，我们明天再来吧。","j-sit-haishi-tea|你喝咖啡和茶？","g-sit-la-bu-la|牛肉面辣不辣吗？","e-sit-zouba|慢走。","e-sit-zouba|请进。","q-sit-manzou|等一下！","q-sit-manzou|请进！","d-sit-manzou-reply|慢走！","d-sit-manzou-reply|请进！","d-sit-manzou-reply|不客气！","d-sit-150|一百五块。","i3-mc-yibaiba-bag|这个书包一百八块。","d-sit-110|一百一块。","d-liangkuai-liangmao-er|这支铅笔二块二毛二。","q-buyong|你不要等我。","d-sit-qingjin|再见！","d-sit-qingjin|慢走！","i3-sit-qingwen-subway|请问，这儿离地铁站远不远吗？","c-sit-meiqu|我不去过。","c-sit-ranhoune|为什么？","b-dengyixia-sit|再见！","b-dengyixia-sit|慢走！","b-haoma-mc|我们下午去公园，好不好吗？","b-haibucuo-sit|没意思。","i1-sit-haobuhao|我们点烤鸭，好不好吗？","b-haikeyi-sit|非常好。","b-haikeyi-sit|不太好。","b-bucuo-sit|没关系！","b-bucuo-sit|没问题！","b-zhende-sit|不错。","b-meiwenti-sit|不客气！","b-guolai-sit|我过去！","b-guolai-sit|慢走！","i2-sit-hui-riyu|你会不会说日语吗？","a-sit-meiguanxi|对不起！","a-sit-meiguanxi|不客气！","a-mc-yiqianlingwushi|这个书包一千五。","i1-mc-1050|我的手机一千五块。","a-sit-nihao|再见！","a-sit-yibaiwushi|一百零五。","a-sit-duibuqi|谢谢！","a-sit-duibuqi|不客气！","a-sit-duibuqi|没关系！","r-sit-wojiushi|她不在。","r-sit-shi-wangfang|喂，王芳在吗？","r-sit-wangfang-zai|喂，是王芳吗？","r-sit-bujianbusan|好。不冷不热。","r-sit-shenmeshi|你有什么爱好？"]);
 const FE_WHY = {"去，吃吧！":"去는 '가다'라 '자, 먹어' 하고 권하는 말이 되지 않아요. 권할 때는 来예요.","不用，我们吃饱吧。":"吃饱는 '배불리 먹다'라 '더치페이하자'가 되지 않아요.","家里是肉。":"是는 '~이다'라 '집은 고기다'가 돼요. '~에 ~이 있다'는 有예요.","我在下班的路上。":"下班은 '퇴근'이라 '출근하는 길'이 되지 않아요. 출근은 上班이에요.","这个星期五我看电影了。":"这个星期는 '이번 주'라 '지난주'가 아니에요. 지난주는 上个星期예요.","我在吃早饭呢。":"早饭은 '아침밥'이에요. '저녁'은 晚饭이에요.","快过去吃饭！":"过去는 말하는 사람에게서 멀어지는 '저쪽으로 가다'예요. '이리 와'는 过来예요.","我现在过来。":"过来는 말하는 사람 쪽으로 '오다'예요. 내가 그쪽으로 갈 때는 过去예요.","您是谁？":"您是谁？는 '누구세요?'라 성을 묻는 말이 아니에요. 성은 贵姓으로 여쭤요.","对不起，我们是好朋友。":"对不起는 '미안해'라 '천만에'가 아니에요. '천만에'는 不客气예요.","这儿很暖和，我们在这儿休息吧。":"暖和는 '따뜻하다'예요. '시원하다'는 凉快예요."};
 function errorQuestions(it) {
   const out = [];
@@ -1087,7 +1089,7 @@ function autoQuestions(it) {
 }
 // 손으로 쓴 객관식은 정답을 첫 칸에 적은 게 많아서(10/17 사용자: '정답이 거의 1번') 낼 때마다 보기를 섞는다
 function authoredFor(it) {
-  return AUTHORED.filter(q => q.item === it.h && q.kind !== "speak").map(q => {
+  return AUTHORED.filter(q => q.item === it.h && (!q.itemP || q.itemP === it.p) && q.kind !== "speak").map(q => {
     const o = Object.assign({ itemId: it.id }, q);
     if (q.choices) Object.assign(o, mcOf(q.choices[q.answer], q.choices.filter((c, i) => i !== q.answer)));
     return o;
@@ -1095,9 +1097,10 @@ function authoredFor(it) {
 }
 // 문제를 실제로 만들지 않고 낼 수 있는 문제가 있는지만 본다 (첫 화면·출제 후보 고르기용)
 const AUTH_KINDS = new Map();
-AUTHORED.filter(q => q.kind !== "speak").forEach(q => AUTH_KINDS.set(q.item, (AUTH_KINDS.get(q.item) || []).concat(q.kind)));
+const authKey = q => (q.itemP ? q.item + "|" + q.itemP : q.item);
+AUTHORED.filter(q => q.kind !== "speak").forEach(q => AUTH_KINDS.set(authKey(q), (AUTH_KINDS.get(authKey(q)) || []).concat(q.kind)));
 function hasQuestions(it) {
-  return autoOk(it) || !!EXP.get(it.id) || (AUTH_KINDS.get(it.h) || []).some(k => S.kbd || k !== "fill_input");
+  return autoOk(it) || !!EXP.get(it.id) || (AUTH_KINDS.get(it.h) || []).concat(AUTH_KINDS.get(it.h + "|" + it.p) || []).some(k => S.kbd || k !== "fill_input");
 }
 function questionsFor(it) {
   const auth = authoredFor(it).filter(q => S.kbd || q.kind !== "fill_input");
@@ -1260,9 +1263,9 @@ function pickSpeak(n, reviewItems, reviewQs) {
   const used = new Set(reviewItems.map(it => it.h));
   const usedIds = new Set(reviewQs.map(q => q.id).filter(Boolean));
   // 복습에 이미 나온 항목, 아직 복습 날이 안 된 항목(오늘 푼 것 등)은 뒤로 — 같은 날 세트를 또 풀어도 말하기가 되풀이되지 않게
-  const notYet = q => { const it = byH.get(q.item); return isSeen(it.id) && !isDue(it.id); };
+  const notYet = q => { const it = itemOfQ(q); return isSeen(it.id) && !isDue(it.id); };
   const recent = q => staleness(q) < -2; // 최근 일주일 안에 본 문장은 말하기에서도 뒤로
-  const rank = list => shuffle(list).sort((a, b) => (used.has(a.item) - used.has(b.item)) || (recent(a) - recent(b)) || (notYet(a) - notYet(b)) || (priority(byH.get(a.item)) - priority(byH.get(b.item))));
+  const rank = list => shuffle(list).sort((a, b) => (used.has(a.item) - used.has(b.item)) || (recent(a) - recent(b)) || (notYet(a) - notYet(b)) || (priority(itemOfQ(a)) - priority(itemOfQ(b))));
   const nTile = Math.max(1, n - 1), tags = new Set(), tilesOut = [], sitOut = []; // 3문제면 카드 2 + 고르기 1
   const keys = reviewQs.flatMap(sentKeys); // 복습에 나온 문장은 말하기에서도 다시 내지 않는다
   const usedItems = new Set(); // 한 항목에 말하기 문제가 여럿(태그만 다름)이어도 한 세트에는 하나만
@@ -1279,7 +1282,7 @@ function pickSpeak(n, reviewItems, reviewQs) {
   // 카드 문제 사이에 고르기 문제를 끼워 연달아 나오지 않게
   const out = [];
   while (tilesOut.length || sitOut.length) { if (tilesOut.length) out.push(tilesOut.shift()); if (sitOut.length) out.push(sitOut.shift()); }
-  return out.map(q => Object.assign({ section: "speak", itemId: byH.get(q.item).id }, q,
+  return out.map(q => Object.assign({ section: "speak", itemId: itemOfQ(q).id }, q,
     q.choices ? mcOf(q.choices[q.answer], q.choices.filter((c, i) => i !== q.answer)) : {}));
 }
 // 카드 문제가 연달아 나오지 않게, 복습 마지막(말하기 바로 앞)에도 오지 않게 자리를 바꾼다
